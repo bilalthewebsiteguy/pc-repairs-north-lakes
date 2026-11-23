@@ -1,0 +1,24 @@
+---
+// Wraps the exported WordPress text. Only the LOOK changes here -
+// the words, headings and links inside <slot /> stay exactly as exported.
+interface Props {
+  class?: string;
+}
+const { class: extra } = Astro.props;
+---
+
+<div
+  class:list={[
+    'wp-text prose prose-slate max-w-none min-w-0 prose-lg break-words',
+    'prose-headings:font-display prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-primary',
+    'prose-h2:mt-12 prose-h2:text-2xl sm:prose-h2:text-3xl prose-h3:text-xl',
+    'prose-a:font-semibold prose-a:text-primary prose-a:decoration-accent prose-a:decoration-2 prose-a:underline-offset-4 hover:prose-a:decoration-primary',
+    'prose-strong:text-ink prose-img:rounded-lg prose-li:marker:text-accent',
+    'prose-table:text-base prose-th:bg-primary-tint prose-th:px-3 prose-td:px-3',
+    // keep wide WordPress images / embeds / tables inside the screen on mobile
+    '[&_img]:h-auto [&_img]:max-w-full [&_iframe]:max-w-full [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto',
+    extra,
+  ]}
+>
+  <slot />
+</div>

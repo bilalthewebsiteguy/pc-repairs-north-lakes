@@ -1,14 +1,29 @@
 ---
-// Service pages and other general pages (Services, About, Data Recovery, brand pages, ...)
-// Keep <Content /> (the original text) as it is - only design around it.
-const { data } = Astro.props;
+// Service pages and general pages (Laptop Repair, Mac Repair, Services, About, brand pages, ...).
+// The page text (<slot />) is the exported WordPress text, unchanged - only its look is styled.
+import CtaBand from '../CtaBand.astro';
+import PageHero from '../PageHero.astro';
+import Prose from '../Prose.astro';
+import SideCallCard from '../SideCallCard.astro';
+
+interface Props {
+  data: { title: string };
+  heading: string; // the page's single H1 (same words as the WordPress page)
+}
+const { heading } = Astro.props;
 ---
 
-<!-- TODO: service hero (H1, short intro, phone + quote buttons) -->
-<section class="mx-auto max-w-6xl px-4 py-12">
-  <h1 class="mb-6 text-3xl font-bold">{data.h1 || data.title}</h1>
-  <article class="prose max-w-none">
-    <slot />
-  </article>
+<PageHero title={heading} eyebrow="Our services" />
+
+<section class="section">
+  <div class="container-site grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <Prose>
+      <slot />
+    </Prose>
+    <div>
+      <SideCallCard heading="Talk to a local technician" />
+    </div>
+  </div>
 </section>
-<!-- TODO: why choose us, other services, call-to-action -->
+
+<CtaBand />

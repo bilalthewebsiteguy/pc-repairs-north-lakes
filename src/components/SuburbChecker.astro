@@ -1,0 +1,98 @@
+---
+// "Do we come to you?" - type a suburb, see straight away whether it's covered,
+// with a link to that suburb's page. Built from the real suburb pages (src/content/pages).
+// Without JavaScript it still shows popular suburbs + a link to the full list.
+import Check from '@lucide/astro/icons/check';
+import MapPin from '@lucide/astro/icons/map-pin';
+import Search from '@lucide/astro/icons/search';
+import { getCollection } from 'astro:content';
+
+const suburbs = (await getCollection('pages', (p) => p.data.slug.startsWith('computer-repairs-')))
+  .map((p) => ({ name: p.data.title.replace(/^computer repairs\s*/i, '').trim(), href: p.data.path }))
+  .filter((s) => s.name)
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const popular = ['North Lakes', 'Mango Hill', 'Kallangur', 'Redcliffe', 'Narangba', 'Chermside'];
+---
+
+<div class="rounded-2xl bg-white p-6 text-ink shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)] sm:p-7" data-suburb-checker>
+  <label for="suburb-input" class="font-display text-xl font-extrabold text-primary">Do we come to you?</label>
+  <p class="mt-1 text-[15px] text-slate-500">Type your suburb. We cover {suburbs.length} suburbs.</p>
+
+  <div class="relative mt-4">
+    <Search size={20} class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+    <input
+      id="suburb-input"
+      type="text"
+      inputmode="search"
+      autocomplete="off"
+      placeholder="e.g. Mango Hill"
+      class="h-14 w-full rounded-xl border-2 border-slate-200 bg-white pr-4 pl-12 text-lg text-ink placeholder:text-slate-400 focus:border-primary focus:outline-none"
+      aria-describedby="suburb-result"
+      data-input
+    />
+  </div>
+
+  <!-- Answer -->
+  <div id="suburb-result" class="mt-4 min-h-[4.5rem]" aria-live="polite">
+    <div data-yes hidden class="flex items-start gap-3 rounded-xl bg-primary-tint p-4">
+      <span class="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-white"><Check size={16} stroke-width={3} aria-hidden="true" /></span>
+      <p class="leading-snug">
+        <span class="font-display font-extrabold text-primary">Yes, we come to <span data-name></span>.</span><br />
+        <a data-link href="#" class="font-bold text-cta underline decoration-2 underline-offset-4">Computer repairs in <span data-name></span></a>
+      </p>
+    </div>
+    <p data-no hidden class="rounded-xl bg-slate-100 p-4 leading-snug text-slate-600">
+      We couldn't find that suburb. Call us, there's a good chance we still cover it.
+    </p>
+    <div data-popular>
+      <p class="text-sm font-bold text-slate-500">Popular areas</p>
+      <ul class="mt-2 flex flex-wrap gap-2">
+        {
+          popular.map((name) => {
+            const s = suburbs.find((x) => x.name === name);
+            return s ? (
+              <li>
+                <a href={s.href} class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-primary hover:border-primary">
+                  <MapPin size={14} aria-hidden="true" /> {s.name}
+                </a>
+              </li>
+            ) : null;
+          })
+        }
+      </ul>
+    </div>
+  </div>
+
+  <a href="/areas-we-serve/" class="mt-4 inline-block text-sm font-bold text-primary underline decoration-accent decoration-2 underline-offset-4">See every area we cover</a>
+
+  <script type="application/json" data-suburbs set:html={JSON.stringify(suburbs)} />
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-suburb-checker]').forEach((root) => {
+    const input = root.querySelector<HTMLInputElement>('[data-input]')!;
+    const yes = root.querySelector<HTMLElement>('[data-yes]')!;
+    const no = root.querySelector<HTMLElement>('[data-no]')!;
+    const popular = root.querySelector<HTMLElement>('[data-popular]')!;
+    const link = root.querySelector<HTMLAnchorElement>('[data-link]')!;
+    const suburbs: { name: string; href: string }[] = JSON.parse(root.querySelector('[data-suburbs]')!.textContent || '[]');
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
+
+    const update = () => {
+      const q = norm(input.value);
+      const match = q.length >= 3 ? suburbs.find((s) => norm(s.name) === q) ?? suburbs.find((s) => norm(s.name).startsWith(q)) : undefined;
+      popular.hidden = q.length >= 3;
+      yes.hidden = !match;
+      no.hidden = !(q.length >= 4 && !match);
+      if (match) {
+        root.querySelectorAll('[data-name]').forEach((el) => (el.textContent = match.name));
+        link.href = match.href;
+      }
+    };
+    input.addEventListener('input', update);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !yes.hidden) window.location.href = link.href;
+    });
+  });
+</script>

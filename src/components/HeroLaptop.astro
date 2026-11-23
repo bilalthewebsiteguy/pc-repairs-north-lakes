@@ -1,0 +1,387 @@
+---
+/**
+ * Front-facing laptop for the Laptop Repair hero. The screen plays a looping "repair story"
+ * (pure CSS, ~16s): each scene shows a problem, a gold scan sweeps it, the problem clears and a
+ * "Fixed" badge appears. The pills underneath light up in sync and link to the repair cards.
+ * Scene names are the WordPress jump-link labels.
+ */
+const scenes = [
+  { id: 'screenrepair', label: 'Screen Replacement/Repair' },
+  { id: 'dcjack', label: 'DC Jack (Charger Port)' },
+  { id: 'virus', label: 'Virus Removal' },
+  { id: 'tuneup', label: 'Tune Ups' },
+];
+// Screen area
+const SX = 106;
+const SY = 28;
+const SW = 388;
+const SH = 236;
+const CX = SX + SW / 2;
+const CY = SY + SH / 2 + 6;
+
+// Keyboard rows on the deck (front view, narrowing towards the hinge)
+const rows = [
+  { y: 296, x0: 128, x1: 472, n: 14 },
+  { y: 310, x0: 116, x1: 484, n: 14 },
+  { y: 324, x0: 104, x1: 496, n: 13 },
+];
+const keys = rows.flatMap((r) => {
+  const step = (r.x1 - r.x0) / r.n;
+  return Array.from({ length: r.n }, (_, i) => ({ x: r.x0 + i * step + 1.5, y: r.y, w: step - 3 }));
+});
+const bugs = [
+  [175, 105],
+  [395, 95],
+  [250, 200],
+  [420, 190],
+  [320, 120],
+];
+---
+
+<div class="hero-laptop hl-float relative mx-auto w-full">
+  <svg viewBox="0 0 600 372" class="w-full overflow-visible" fill="none" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+    <defs>
+      <radialGradient id="hl-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0.3"></stop>
+        <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+      </radialGradient>
+      <linearGradient id="hl-scan" x1="0" x2="1">
+        <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+        <stop offset="0.85" stop-color="var(--brand-accent)" stop-opacity="0.35"></stop>
+        <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="1"></stop>
+      </linearGradient>
+      <clipPath id="hl-screen-clip"><rect x={SX} y={SY} width={SW} height={SH} rx="6"></rect></clipPath>
+    </defs>
+
+    <ellipse cx="300" cy="358" rx="290" ry="20" fill="url(#hl-glow)"></ellipse>
+
+    <!-- lid -->
+    <rect x="90" y="10" width="420" height="270" rx="16" class="hl-lid"></rect>
+    <rect x={SX} y={SY} width={SW} height={SH} rx="6" class="hl-screen"></rect>
+    <circle cx="300" cy="19" r="2.6" class="hl-cam"></circle>
+
+    <!-- screen content: one scene at a time -->
+    <g clip-path="url(#hl-screen-clip)">
+      {
+        scenes.map((s, i) => (
+          <g class="scene" style={`--d:${i * 4}s`}>
+            {/* top bar */}
+            <text x={SX + 18} y={SY + 28} class="hl-label">{s.label}</text>
+            <text x={SX + SW - 18} y={SY + 28} text-anchor="end" class="hl-status hl-diag">Diagnosing…</text>
+            <text x={SX + SW - 18} y={SY + 28} text-anchor="end" class="hl-status hl-done">Fixed</text>
+            <path d={`M${SX + 18} ${SY + 40} H${SX + SW - 18}`} class="hl-rule" />
+
+            {i === 0 && (
+              <g class="problem">
+                <path d={`M${CX - 10} ${CY - 70} L${CX + 12} ${CY - 22} L${CX - 30} ${CY + 10} L${CX - 4} ${CY + 60} M${CX + 12} ${CY - 22} L${CX + 70} ${CY - 6} L${CX + 96} ${CY + 40} M${CX - 30} ${CY + 10} L${CX - 96} ${CY + 24} M${CX + 12} ${CY - 22} L${CX + 40} ${CY - 74}`} class="hl-crack" />
+                <circle cx={CX + 12} cy={CY - 22} r="5" class="hl-crack-dot" />
+              </g>
+            )}
+            {i === 1 && (
+              <g>
+                <g class="problem">
+                  <path d={`M${CX - 112} ${CY} H${CX - 72}`} class="hl-cable" />
+                </g>
+                <rect x={CX - 62} y={CY - 30} width="124" height="60" rx="10" class="hl-outline" />
+                <rect x={CX + 62} y={CY - 12} width="10" height="24" rx="3" class="hl-outline" />
+                <rect x={CX - 54} y={CY - 22} width="108" height="44" rx="5" class="hl-fill" />
+                <path d={`M${CX + 6} ${CY - 18} L${CX - 10} ${CY + 3} H${CX + 4} L${CX - 6} ${CY + 20}`} class="hl-bolt" />
+                <g class="hl-plug">
+                  <rect x={CX - 150} y={CY - 10} width="28" height="20" rx="4" class="hl-outline" />
+                  <path d={`M${CX - 122} ${CY - 5} h10 M${CX - 122} ${CY + 5} h10 M${CX - 150} ${CY} H${CX - 200}`} class="hl-outline" />
+                </g>
+              </g>
+            )}
+            {i === 2 && (
+              <g>
+                {bugs.map(([x, y], b) => (
+                  <g class="bug" style={`--b:${(((4 + (9 * (x - 11 - SX)) / 520) / 100) * 16).toFixed(2)}s`}>
+                    <ellipse cx={x} cy={y} rx="11" ry="14" class="hl-bug" />
+                    <path d={`M${x - 11} ${y - 4} l-9 -6 M${x - 11} ${y + 4} l-9 4 M${x + 11} ${y - 4} l9 -6 M${x + 11} ${y + 4} l9 4 M${x - 4} ${y - 14} l-4 -8 M${x + 4} ${y - 14} l4 -8 M${x} ${y - 10} V${y + 12}`} class="hl-bug-legs" />
+                  </g>
+                ))}
+              </g>
+            )}
+            {i === 3 && (
+              <g>
+                <path d={`M${CX - 80} ${CY + 40} A80 80 0 0 1 ${CX + 80} ${CY + 40}`} class="hl-gauge" />
+                <path d={`M${CX - 80} ${CY + 40} A80 80 0 0 1 ${CX + 80} ${CY + 40}`} class="hl-gauge-fill" pathLength="100" />
+                <g class="hl-needle" style={`transform-origin:${CX}px ${CY + 40}px`}>
+                  <path d={`M${CX} ${CY + 40} L${CX} ${CY - 22}`} class="hl-needle-line" />
+                </g>
+                <circle cx={CX} cy={CY + 40} r="7" class="hl-fill-solid" />
+              </g>
+            )}
+
+            {/* scan sweep (screen, virus) */}
+            {(i === 0 || i === 2) && <rect x={SX - 120} y={SY + 44} width="120" height={SH - 44} class="hl-sweep" fill="url(#hl-scan)" />}
+
+            {/* progress bar */}
+            <path d={`M${SX + 18} ${SY + SH - 18} H${SX + SW - 18}`} class="hl-track" />
+            <path d={`M${SX + 18} ${SY + SH - 18} H${SX + SW - 18}`} class="hl-progress" pathLength="100" />
+
+            {/* fixed badge (the charger scene shows a full battery instead) */}
+            {i !== 1 && <g class="hl-check" style={`transform-origin:${CX}px ${CY}px`}>
+              <circle cx={CX} cy={CY} r="34" class="hl-fill-solid" />
+              <path d={`M${CX - 14} ${CY} l10 10 l19 -21`} class="hl-check-mark" />
+            </g>}
+          </g>
+        ))
+      }
+    </g>
+
+    <!-- base / deck (front view) -->
+    <path d="M92 282 H508 L586 344 Q590 352 580 352 H20 Q10 352 14 344 Z" class="hl-deck"></path>
+    <path d="M14 344 H586" class="hl-edge"></path>
+    <path d="M262 282 h76 v4 q0 4 -4 4 h-68 q-4 0 -4 -4 z" class="hl-hinge"></path>
+    {keys.map((k) => <rect x={k.x} y={k.y} width={k.w} height="10" rx="2" class="hl-key" />)}
+    <path d="M262 334 H338 L342 344 H258 Z" class="hl-key" />
+    <rect x="22" y="336" width="14" height="6" rx="1.5" class="hl-port"></rect>
+  </svg>
+
+  <!-- scene pills, lit in sync with the screen -->
+  <ul class="mt-6 flex flex-wrap justify-center gap-2" role="list">
+    {
+      scenes.map((s, i) => (
+        <li>
+          <a href={`#${s.id}`} class="hl-pill inline-flex rounded-full px-3.5 py-1.5 font-display text-xs font-bold ring-1 ring-white/25 sm:text-sm" style={`--d:${i * 4}s`}>
+            {s.label}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .hero-laptop {
+    --cycle: 16s;
+  }
+  .hero-laptop .hl-lid {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 20%);
+    stroke: var(--brand-accent);
+    stroke-width: 2.5;
+  }
+  .hero-laptop .hl-screen {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 12%);
+    stroke: color-mix(in oklab, var(--brand-accent), transparent 45%);
+    stroke-width: 1.5;
+  }
+  .hero-laptop .hl-cam,
+  .hero-laptop .hl-fill-solid {
+    fill: var(--brand-accent);
+  }
+  .hero-laptop .hl-deck {
+    fill: color-mix(in oklab, var(--brand-primary), black 35%);
+    stroke: rgb(255 255 255 / 0.7);
+    stroke-width: 1.8;
+  }
+  .hero-laptop .hl-edge {
+    stroke: rgb(255 255 255 / 0.35);
+    stroke-width: 1.2;
+  }
+  .hero-laptop .hl-hinge {
+    fill: color-mix(in oklab, var(--brand-primary), black 15%);
+  }
+  .hero-laptop .hl-key {
+    fill: rgb(255 255 255 / 0.22);
+  }
+  .hero-laptop .hl-port {
+    fill: var(--brand-accent);
+  }
+
+  /* screen text */
+  .hero-laptop .hl-label {
+    font-family: 'Montserrat Variable', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    fill: #fff;
+  }
+  .hero-laptop .hl-status {
+    font-family: 'Montserrat Variable', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .hero-laptop .hl-diag {
+    fill: rgb(255 255 255 / 0.6);
+  }
+  .hero-laptop .hl-done {
+    fill: var(--brand-accent);
+  }
+  .hero-laptop .hl-rule {
+    stroke: rgb(255 255 255 / 0.12);
+  }
+  .hero-laptop .hl-track {
+    stroke: rgb(255 255 255 / 0.12);
+    stroke-width: 6;
+  }
+  .hero-laptop .hl-progress {
+    stroke: var(--brand-accent);
+    stroke-width: 6;
+    stroke-dasharray: 100;
+  }
+  .hero-laptop .hl-crack {
+    stroke: #fff;
+    stroke-width: 2.2;
+  }
+  .hero-laptop .hl-crack-dot {
+    fill: #fff;
+  }
+  .hero-laptop .hl-outline,
+  .hero-laptop .hl-cable {
+    stroke: rgb(255 255 255 / 0.8);
+    stroke-width: 2.5;
+  }
+  .hero-laptop .hl-fill {
+    fill: var(--brand-accent);
+    transform-box: fill-box;
+    transform-origin: left;
+  }
+  .hero-laptop .hl-bolt {
+    stroke: var(--brand-ink);
+    stroke-width: 3;
+  }
+  .hero-laptop .hl-bug {
+    fill: var(--brand-cta);
+  }
+  .hero-laptop .hl-bug-legs {
+    stroke: var(--brand-cta);
+    stroke-width: 2.2;
+  }
+  .hero-laptop .hl-gauge {
+    stroke: rgb(255 255 255 / 0.15);
+    stroke-width: 14;
+  }
+  .hero-laptop .hl-gauge-fill {
+    stroke: var(--brand-accent);
+    stroke-width: 14;
+    stroke-dasharray: 100;
+  }
+  .hero-laptop .hl-needle-line {
+    stroke: #fff;
+    stroke-width: 4;
+  }
+  .hero-laptop .hl-check-mark {
+    stroke: var(--brand-ink);
+    stroke-width: 5;
+  }
+
+  /* ---- the story: every scene runs on the same 16s clock, offset by --d ---- */
+  .hero-laptop .scene,
+  .hero-laptop .scene *,
+  .hero-laptop .hl-pill {
+    animation-duration: var(--cycle);
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+    animation-timing-function: ease-in-out;
+  }
+  .hero-laptop .scene {
+    animation-name: hl-scene;
+    animation-delay: var(--d);
+  }
+  .hero-laptop .scene .hl-diag { animation-name: hl-diag; animation-delay: var(--d); }
+  .hero-laptop .scene .hl-done { animation-name: hl-done; animation-delay: var(--d); }
+  .hero-laptop .scene .hl-progress { animation-name: hl-progress; animation-delay: var(--d); }
+  .hero-laptop .scene .problem { animation-name: hl-problem; animation-delay: var(--d); }
+  .hero-laptop .scene .hl-sweep { animation-name: hl-sweep; animation-delay: var(--d); }
+  .hero-laptop .scene .hl-check { animation-name: hl-check; animation-delay: var(--d); }
+  .hero-laptop .scene .hl-fill { animation-name: hl-charge; animation-delay: var(--d); }
+  .hero-laptop .scene .hl-plug { animation-name: hl-plug; animation-delay: var(--d); }
+  .hero-laptop .scene .hl-bolt { animation-name: hl-bolt; animation-delay: var(--d); }
+  .hero-laptop .scene .bug { animation-name: hl-bug; animation-delay: calc(var(--d) + var(--b)); }
+  .hero-laptop .scene .hl-gauge-fill { animation-name: hl-gauge; animation-delay: var(--d); }
+  .hero-laptop .scene .hl-needle { animation-name: hl-needle; animation-delay: var(--d); }
+  .hero-laptop .hl-pill { animation-name: hl-pill; animation-delay: var(--d); }
+  /* one scene = 25% of the cycle */
+  @keyframes hl-scene {
+    0% { opacity: 0; }
+    2%, 23% { opacity: 1; }
+    25%, 100% { opacity: 0; }
+  }
+  @keyframes hl-diag {
+    0%, 14% { opacity: 1; }
+    15%, 100% { opacity: 0; }
+  }
+  @keyframes hl-done {
+    0%, 14% { opacity: 0; }
+    15%, 25% { opacity: 1; }
+    26%, 100% { opacity: 0; }
+  }
+  @keyframes hl-progress {
+    0%, 2% { stroke-dashoffset: 100; }
+    14%, 25% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes hl-problem {
+    0%, 9% { opacity: 1; }
+    13%, 100% { opacity: 0; }
+  }
+  @keyframes hl-sweep {
+    0%, 4% { transform: translateX(0); opacity: 1; }
+    13% { transform: translateX(520px); opacity: 1; }
+    14%, 100% { transform: translateX(520px); opacity: 0; }
+  }
+  @keyframes hl-check {
+    0%, 14% { opacity: 0; transform: scale(0.4); }
+    16% { opacity: 1; transform: scale(1.12); }
+    18%, 23% { opacity: 1; transform: scale(1); }
+    25%, 100% { opacity: 0; transform: scale(1); }
+  }
+  @keyframes hl-charge {
+    0%, 6% { transform: scaleX(0.08); }
+    14%, 100% { transform: scaleX(1); }
+  }
+  @keyframes hl-plug {
+    0%, 3% { transform: translateX(-40px); }
+    7%, 100% { transform: translateX(36px); }
+  }
+  @keyframes hl-bolt {
+    0%, 6% { opacity: 0; }
+    8%, 14% { opacity: 1; }
+    15%, 100% { opacity: 0; }
+  }
+  /* each bug's clock starts when the scan line reaches it (see --b) */
+  @keyframes hl-bug {
+    0% { opacity: 1; transform: scale(1); }
+    3%, 89% { opacity: 0; transform: scale(0.3); }
+    90%, 100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes hl-gauge {
+    0%, 3% { stroke-dashoffset: 85; }
+    13%, 100% { stroke-dashoffset: 8; }
+  }
+  @keyframes hl-needle {
+    0%, 3% { transform: rotate(-70deg); }
+    13%, 100% { transform: rotate(68deg); }
+  }
+  @keyframes hl-pill {
+    0% { background: transparent; color: #fff; }
+    2%, 23% { background: var(--brand-accent); color: var(--brand-ink); box-shadow: 0 0 0 1px var(--brand-accent); }
+    25%, 100% { background: transparent; color: #fff; }
+  }
+  .hero-laptop .bug {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .hero-laptop.hl-float {
+    animation: hl-float 6s ease-in-out infinite;
+  }
+  @keyframes hl-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-laptop.hl-float,
+    .hero-laptop .scene,
+    .hero-laptop .scene *,
+    .hero-laptop .hl-pill {
+      animation: none !important;
+    }
+    .hero-laptop .scene:not(:first-child) { display: none; }
+    .hero-laptop .scene .hl-sweep,
+    .hero-laptop .scene .problem,
+    .hero-laptop .scene .hl-done { opacity: 0; }
+  }
+</style>

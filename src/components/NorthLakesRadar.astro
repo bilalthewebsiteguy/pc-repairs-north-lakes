@@ -1,0 +1,206 @@
+---
+/**
+ * "We come to you" map for the Computer Repairs North Lakes hero.
+ * North Lakes is pinned in the centre with pulsing rings; nearby suburbs sit around it
+ * (stylised, not to scale) and a technician van drives in along a road to the pin.
+ * The badge uses the page's own SEO title wording: "less than 5 mins away".
+ */
+const C = { x: 300, y: 250 };
+// Rough compass positions around North Lakes (stylised, not to scale)
+const suburbs = [
+  { name: 'Mango Hill', x: 418, y: 238 },
+  { name: 'Kallangur', x: 178, y: 268 },
+  { name: 'Griffin', x: 362, y: 340 },
+  { name: 'Dakabin', x: 214, y: 150 },
+  { name: 'Murrumba Downs', x: 262, y: 372 },
+  { name: 'Petrie', x: 116, y: 356 },
+  { name: 'Narangba', x: 110, y: 112 },
+  { name: 'Deception Bay', x: 392, y: 104 },
+  { name: 'Rothwell', x: 506, y: 176 },
+  { name: 'Kippa-Ring', x: 524, y: 300 },
+];
+// Road the van follows (ends at the pin)
+const road = `M -20 420 C 90 400, 120 330, 190 320 S 260 290, ${C.x} ${C.y}`;
+---
+
+<div class="nl-radar relative mx-auto w-full">
+  <svg viewBox="0 0 600 460" class="w-full overflow-visible" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <defs>
+      <radialGradient id="nlr-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0.35"></stop>
+        <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+      </radialGradient>
+      <linearGradient id="nlr-sweep" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+        <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0.45"></stop>
+      </linearGradient>
+      <clipPath id="nlr-clip"><circle cx={C.x} cy={C.y} r="230"></circle></clipPath>
+    </defs>
+
+    <!-- map disc -->
+    <circle cx={C.x} cy={C.y} r="230" class="nlr-disc"></circle>
+    <g clip-path="url(#nlr-clip)">
+      <!-- faint street grid -->
+      {Array.from({ length: 13 }, (_, i) => <path d={`M ${70 + i * 36} 0 V 460`} class="nlr-grid" />)}
+      {Array.from({ length: 13 }, (_, i) => <path d={`M 0 ${30 + i * 36} H 600`} class="nlr-grid" />)}
+      <!-- the lake -->
+      <path d="M 312 214 C 336 204, 356 222, 350 244 C 344 266, 316 270, 300 258 C 288 246, 292 222, 312 214 Z" class="nlr-lake" />
+      <!-- motorway -->
+      <path d="M 150 -10 C 190 120, 230 220, 250 470" class="nlr-highway" />
+      <!-- radar sweep -->
+      <g class="nlr-sweep" style={`transform-origin:${C.x}px ${C.y}px`}>
+        <path d={`M ${C.x} ${C.y} L ${C.x + 230} ${C.y} A 230 230 0 0 0 ${C.x + 230 * Math.cos(Math.PI / 5)} ${C.y - 230 * Math.sin(Math.PI / 5)} Z`} fill="url(#nlr-sweep)" />
+      </g>
+    </g>
+    <!-- range rings -->
+    {[70, 140, 210].map((r) => <circle cx={C.x} cy={C.y} r={r} class="nlr-ring" />)}
+
+    <!-- road + van -->
+    <path d={road} class="nlr-road" />
+    <path d={road} class="nlr-road-dash" />
+    <g class="nlr-van">
+      <animateMotion dur="7s" repeatCount="indefinite" rotate="auto" keyPoints="0;1;1" keyTimes="0;0.7;1" calcMode="linear" path={road} />
+      <animate attributeName="opacity" dur="7s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;0.08;0.7;0.85;1" />
+      <g transform="translate(-17 -13)">
+        <rect x="0" y="4" width="26" height="16" rx="3" class="nlr-van-body" />
+        <path d="M26 9 h5 l4 6 v5 h-9 z" class="nlr-van-body" />
+        <circle cx="7" cy="21" r="3.2" class="nlr-wheel" />
+        <circle cx="27" cy="21" r="3.2" class="nlr-wheel" />
+        <rect x="4" y="8" width="12" height="4" rx="1" class="nlr-van-stripe" />
+      </g>
+    </g>
+
+    <!-- suburbs -->
+    {
+      suburbs.map((s, i) => (
+        <g class="nlr-sub" style={`--i:${i}`}>
+          <circle cx={s.x} cy={s.y} r="4.5" class="nlr-sub-dot" />
+          <text x={s.x} y={s.y - 11} text-anchor="middle" class="nlr-sub-name">
+            {s.name}
+          </text>
+        </g>
+      ))
+    }
+
+    <!-- North Lakes pin -->
+    <circle cx={C.x} cy={C.y} r="90" fill="url(#nlr-glow)"></circle>
+    <circle cx={C.x} cy={C.y} r="16" class="nlr-pulse"></circle>
+    <circle cx={C.x} cy={C.y} r="16" class="nlr-pulse nlr-pulse-2"></circle>
+    <g transform={`translate(${C.x - 18} ${C.y - 50})`}>
+      <path d="M18 0 C 8 0 0 8 0 18 C 0 31 18 46 18 46 C 18 46 36 31 36 18 C 36 8 28 0 18 0 Z" class="nlr-pin" />
+      <circle cx="18" cy="17" r="6.5" class="nlr-pin-hole" />
+    </g>
+    <g transform={`translate(${C.x} ${C.y + 30})`}>
+      <rect x="-56" y="-13" width="112" height="26" rx="13" class="nlr-label-bg" />
+      <text y="5" text-anchor="middle" class="nlr-label">North Lakes</text>
+    </g>
+  </svg>
+
+  <!-- "less than 5 mins away" badge (wording from the page's SEO title) -->
+  <div class="nlr-badge absolute right-0 bottom-[4%] rounded-2xl bg-white px-4 py-3 text-ink shadow-lift sm:right-[4%]">
+    <p class="font-display text-2xl leading-none font-extrabold text-primary sm:text-3xl">&lt; 5 mins</p>
+    <p class="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">less than 5 mins away</p>
+  </div>
+</div>
+
+<style>
+  .nl-radar .nlr-disc {
+    fill: color-mix(in oklab, var(--brand-primary), black 30%);
+    stroke: rgb(255 255 255 / 0.25);
+    stroke-width: 1.5;
+  }
+  .nl-radar .nlr-grid {
+    stroke: rgb(255 255 255 / 0.06);
+  }
+  .nl-radar .nlr-lake {
+    fill: color-mix(in oklab, var(--brand-primary), white 35%);
+    opacity: 0.55;
+  }
+  .nl-radar .nlr-highway {
+    stroke: rgb(255 255 255 / 0.18);
+    stroke-width: 9;
+  }
+  .nl-radar .nlr-ring {
+    stroke: rgb(255 255 255 / 0.22);
+    stroke-dasharray: 2 6;
+  }
+  .nl-radar .nlr-road {
+    stroke: rgb(255 255 255 / 0.35);
+    stroke-width: 10;
+  }
+  .nl-radar .nlr-road-dash {
+    stroke: var(--brand-accent);
+    stroke-width: 1.6;
+    stroke-dasharray: 8 8;
+  }
+  .nl-radar .nlr-van-body {
+    fill: #fff;
+  }
+  .nl-radar .nlr-van-stripe {
+    fill: var(--brand-cta);
+  }
+  .nl-radar .nlr-wheel {
+    fill: var(--brand-ink);
+    stroke: #fff;
+    stroke-width: 1;
+  }
+  .nl-radar .nlr-sweep {
+    animation: nlr-spin 6s linear infinite;
+  }
+  .nl-radar .nlr-sub-dot {
+    fill: #fff;
+    animation: nlr-blink 6s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.6s);
+  }
+  .nl-radar .nlr-sub-name {
+    fill: rgb(255 255 255 / 0.85);
+    font-family: 'Lato', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .nl-radar .nlr-pulse {
+    fill: none;
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: nlr-pulse 2.4s ease-out infinite;
+  }
+  .nl-radar .nlr-pulse-2 {
+    animation-delay: 1.2s;
+  }
+  .nl-radar .nlr-pin {
+    fill: var(--brand-cta);
+    stroke: #fff;
+    stroke-width: 2.5;
+  }
+  .nl-radar .nlr-pin-hole {
+    fill: #fff;
+  }
+  .nl-radar .nlr-label-bg {
+    fill: var(--brand-accent);
+  }
+  .nl-radar .nlr-label {
+    fill: var(--brand-ink);
+    font-family: 'Montserrat Variable', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+  }
+  @keyframes nlr-spin {
+    to { transform: rotate(-360deg); }
+  }
+  @keyframes nlr-blink {
+    0%, 100% { fill: #fff; }
+    8% { fill: var(--brand-accent); }
+    20% { fill: #fff; }
+  }
+  @keyframes nlr-pulse {
+    from { transform: scale(1); opacity: 0.9; }
+    to { transform: scale(5); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nl-radar .nlr-sweep,
+    .nl-radar .nlr-sub-dot,
+    .nl-radar .nlr-pulse { animation: none; }
+  }
+</style>

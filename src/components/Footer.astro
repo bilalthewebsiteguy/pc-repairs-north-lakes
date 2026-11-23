@@ -1,0 +1,86 @@
+---
+// Footer. Links match the WordPress footer (services, laptop brands, suburbs) so internal links stay the same.
+import Mail from '@lucide/astro/icons/mail';
+import MapPin from '@lucide/astro/icons/map-pin';
+import Phone from '@lucide/astro/icons/phone';
+import { site, type NavItem } from '../config/site';
+import FooterSkyline from './FooterSkyline.astro';
+import Logo from './Logo.astro';
+
+const year = new Date().getFullYear();
+const services = (site.nav as readonly NavItem[]).find((n) => n.children)?.children ?? [];
+const heading = 'mb-4 font-display text-xs font-bold tracking-[0.16em] text-accent uppercase';
+const link = 'text-white/75 transition hover:text-white hover:underline';
+---
+
+<footer class="bg-primary-deep pb-28 text-sm text-white/75 md:pb-0">
+  <div class="h-1 bg-accent" aria-hidden="true"></div>
+  <FooterSkyline />
+  <div class="container-site grid gap-10 pt-12 pb-16 sm:grid-cols-2 lg:grid-cols-12">
+    <div class="lg:col-span-4">
+      <Logo size="lg" onDark />
+      <p class="mt-5 max-w-sm leading-relaxed">{site.tagline}</p>
+      <ul class="mt-6 space-y-3">
+        <li>
+          <a href={`tel:${site.phone.tel}`} class="inline-flex items-center gap-2.5 font-semibold text-white hover:underline">
+            <Phone size={17} aria-hidden="true" class="text-accent" />
+            {site.phone.display}
+          </a>
+        </li>
+        <li>
+          <a href={`mailto:${site.email}`} class="inline-flex items-center gap-2.5 break-all hover:text-white hover:underline">
+            <Mail size={17} aria-hidden="true" class="shrink-0 text-accent" />
+            {site.email}
+          </a>
+        </li>
+        <li class="flex items-start gap-2.5">
+          <MapPin size={17} aria-hidden="true" class="mt-0.5 shrink-0 text-accent" />
+          <span>Servicing {site.area}</span>
+        </li>
+      </ul>
+    </div>
+
+    <nav aria-label="Services" class="lg:col-span-2">
+      <h2 class={heading}>Services</h2>
+      <ul class="space-y-2.5">
+        {services.map((s) => <li><a href={s.href} class={link}>{s.label}</a></li>)}
+        <li><a href="/services/" class={link}>All services</a></li>
+      </ul>
+      <h2 class:list={[heading, 'mt-8']}>Laptop brands</h2>
+      <ul class="grid grid-cols-2 gap-x-4 gap-y-2.5">
+        {site.brands.map((b) => <li><a href={b.href} class={link}>{b.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <nav aria-label="Suburbs" class="lg:col-span-4">
+      <h2 class={heading}>Areas we service</h2>
+      <ul class="grid grid-cols-2 gap-x-4 gap-y-2.5">
+        {site.featuredSuburbs.map((s) => <li><a href={s.href} class={link}>{s.label}</a></li>)}
+      </ul>
+      <a href="/areas-we-serve/" class="mt-4 inline-block font-semibold text-white hover:underline">All coverage areas →</a>
+    </nav>
+
+    <div class="lg:col-span-2">
+      <h2 class={heading}>Company</h2>
+      <ul class="space-y-2.5">
+        <li><a href="/about-us/" class={link}>About us</a></li>
+        <li><a href="/meet-the-team/" class={link}>Meet the team</a></li>
+        <li><a href="/blog/" class={link}>Blog</a></li>
+        <li><a href={site.quoteUrl} class={link}>Get a quote</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="border-t border-white/10">
+    <div class="container-site py-6 text-xs text-white/70">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p>&copy; {year} {site.businessName}. All rights reserved.</p>
+        <p>Computer &amp; laptop repairs across {site.area}.</p>
+      </div>
+      <p class="mt-3 text-white/50">
+        {site.businessName} is an independent repair service and is not affiliated with or endorsed by Apple, Dell, HP, Lenovo, Asus,
+        Acer, Sony or Microsoft. All trademarks belong to their respective owners.
+      </p>
+    </div>
+  </div>
+</footer>

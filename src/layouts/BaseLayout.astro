@@ -1,8 +1,18 @@
 ---
 // src/layouts/BaseLayout.astro
-// Every page uses this. The header and footer go here once you design them.
-import Seo from '../components/Seo.astro';
+// Every page uses this. SEO tags come from <Seo /> (unchanged WordPress values).
+// Header / footer / fonts / colours: North Lakes brand (Montserrat + Lato, steel blue + orange).
+import montserratFont from '@fontsource-variable/montserrat/files/montserrat-latin-wght-normal.woff2?url';
+import lato400 from '@fontsource/lato/files/lato-latin-400-normal.woff2?url';
+import lato700 from '@fontsource/lato/files/lato-latin-700-normal.woff2?url';
 import '../styles/global.css';
+
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import MobileCTABar from '../components/MobileCTABar.astro';
+import Seo from '../components/Seo.astro';
+import TopBar from '../components/TopBar.astro';
+import { site } from '../config/site';
 
 interface Props {
   seo: Parameters<typeof Seo>[0]['data'];
@@ -10,32 +20,113 @@ interface Props {
 }
 
 const { seo, type } = Astro.props;
+
+const fontFaces = `@font-face{font-family:'Montserrat Variable';font-style:normal;font-display:swap;font-weight:100 900;src:url(${montserratFont}) format('woff2');}@font-face{font-family:'Lato';font-style:normal;font-display:swap;font-weight:400;src:url(${lato400}) format('woff2');}@font-face{font-family:'Lato';font-style:normal;font-display:swap;font-weight:700;src:url(${lato700}) format('woff2');}`;
+const brandVars = `:root{--brand-primary:${site.colors.primary};--brand-accent:${site.colors.accent};--brand-cta:${site.colors.cta};--brand-ink:${site.colors.ink};}`;
 ---
 
 <!doctype html>
-<html lang="en-AU">
+<html
+  lang="en-AU"
+  data-page-links-disabled={site.pageLinksEnabled ? undefined : ''}
+  data-live-pages={site.pageLinksEnabled ? undefined : JSON.stringify(site.livePages)}
+>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <Seo data={seo} type={type} />
+    <meta name="theme-color" content={site.colors.primary} />
+    <link rel="icon" type="image/png" href="/images/PRN-Icon.png" />
+    <link rel="apple-touch-icon" href="/images/PRN-Icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="preload" href={montserratFont} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={lato400} as="font" type="font/woff2" crossorigin />
+    <style is:inline set:html={fontFaces + brandVars} />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
     <slot name="head" />
   </head>
-  <body class="min-h-screen bg-white text-slate-800 antialiased">
-    <header class="border-b">
-      <!-- TODO: design the header (logo, menu, phone button, quote button) -->
-      <div class="mx-auto max-w-6xl px-4 py-4">
-        <a href="/" class="font-bold">PC Repairs North Lakes</a>
-      </div>
-    </header>
-
-    <main>
+  <body class="flex min-h-dvh flex-col">
+    <a
+      href="#main"
+      class="sr-only z-50 rounded-lg bg-primary px-4 py-2 font-semibold text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+    >
+      Skip to content
+    </a>
+    <TopBar />
+    <Header />
+    <main id="main" class="flex-1">
       <slot />
     </main>
+    <Footer />
+    <MobileCTABar />
 
-    <footer class="border-t">
-      <!-- TODO: design the footer (services, brand links, contact) -->
-      <div class="mx-auto max-w-6xl px-4 py-8 text-sm">PC Repairs North Lakes</div>
-    </footer>
+    <script>
+      // Fade sections in as they scroll into view (only when motion is allowed).
+      const items = document.querySelectorAll<HTMLElement>('[data-reveal]');
+      if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                io.unobserve(entry.target);
+              }
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.05 },
+        );
+        items.forEach((el) => io.observe(el));
+      } else {
+        items.forEach((el) => el.classList.add('is-visible'));
+      }
+
+      // Preview mode (site.pageLinksEnabled = false): links to pages not in site.livePages do nothing.
+      // Same-page anchors, tel:, mailto: and external links (e.g. the quote form) still work.
+      // Checked at click time, so links that change later (the suburb checker) are covered too.
+      if (document.documentElement.hasAttribute('data-page-links-disabled')) {
+        const live = new Set<string>(JSON.parse(document.documentElement.dataset.livePages ?? '[]'));
+        const isBlocked = (a: HTMLAnchorElement) => {
+          const url = new URL(a.href, location.href);
+          if (url.origin !== location.origin) return false;
+          if (url.pathname === location.pathname) return false;
+          const path = url.pathname.endsWith('/') ? url.pathname : url.pathname + '/';
+          return !live.has(path);
+        };
+        const mark = () =>
+          document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
+            if (isBlocked(a)) {
+              a.setAttribute('aria-disabled', 'true');
+              a.title = 'Coming soon';
+            } else {
+              a.removeAttribute('aria-disabled');
+              if (a.title === 'Coming soon') a.removeAttribute('title');
+            }
+          });
+        mark();
+        document.addEventListener('input', mark);
+        document.addEventListener(
+          'click',
+          (e) => {
+            const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+            if (a && isBlocked(a)) e.preventDefault();
+          },
+          true,
+        );
+        // Enter in the suburb checker also navigates - block it for pages that aren't live yet
+        document.addEventListener(
+          'keydown',
+          (e) => {
+            const link = document.querySelector<HTMLAnchorElement>('[data-suburb-checker] [data-link]');
+            if (e.key === 'Enter' && (e.target as Element)?.matches?.('[data-input]') && link && isBlocked(link)) {
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            }
+          },
+          true,
+        );
+      }
+    </script>
   </body>
 </html>

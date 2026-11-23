@@ -6,7 +6,10 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SuburbTemplate from '../components/templates/SuburbTemplate.astro';
 import ServiceTemplate from '../components/templates/ServiceTemplate.astro';
+import LaptopTemplate from '../components/templates/LaptopTemplate.astro';
+import NorthLakesTemplate from '../components/templates/NorthLakesTemplate.astro';
 import PostTemplate from '../components/templates/PostTemplate.astro';
+import { pageHeading } from '../lib/heading';
 
 export async function getStaticPaths() {
   // These paths have their own files in src/pages/, so the catch-all skips them
@@ -25,18 +28,23 @@ export async function getStaticPaths() {
 }
 
 const { entry, kind } = Astro.props;
-const { Content } = await render(entry);
+const { Content, remarkPluginFrontmatter } = await render(entry);
+const heading = pageHeading(entry.data, remarkPluginFrontmatter);
 const isSuburb = kind === 'page' && entry.data.slug.startsWith('computer-repairs-');
 ---
 
 <BaseLayout seo={entry.data} type={kind === 'post' ? 'article' : 'website'}>
   {
     kind === 'post' ? (
-      <PostTemplate data={entry.data}><Content /></PostTemplate>
+      <PostTemplate data={entry.data} heading={heading}><Content /></PostTemplate>
+    ) : entry.data.path === '/laptop-repair/' ? (
+      <LaptopTemplate heading={heading} body={entry.body ?? ''} />
+    ) : entry.data.path === '/computer-repairs-north-lakes/' ? (
+      <NorthLakesTemplate heading={heading} body={entry.body ?? ''} />
     ) : isSuburb ? (
-      <SuburbTemplate data={entry.data}><Content /></SuburbTemplate>
+      <SuburbTemplate data={entry.data} heading={heading}><Content /></SuburbTemplate>
     ) : (
-      <ServiceTemplate data={entry.data}><Content /></ServiceTemplate>
+      <ServiceTemplate data={entry.data} heading={heading}><Content /></ServiceTemplate>
     )
   }
 </BaseLayout>

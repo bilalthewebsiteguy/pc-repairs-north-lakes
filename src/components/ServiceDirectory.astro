@@ -1,0 +1,191 @@
+---
+/**
+ * Searchable directory of the page's "most popular services" list (41 WordPress items).
+ * Every card keeps its WordPress link and description. Typing in the box filters the cards;
+ * without JavaScript all cards simply show.
+ */
+import AppWindow from '@lucide/astro/icons/app-window';
+import BatteryCharging from '@lucide/astro/icons/battery-charging';
+import Briefcase from '@lucide/astro/icons/briefcase';
+import Bug from '@lucide/astro/icons/bug';
+import CalendarCheck from '@lucide/astro/icons/calendar-check';
+import Cloud from '@lucide/astro/icons/cloud';
+import Cpu from '@lucide/astro/icons/cpu';
+import DatabaseBackup from '@lucide/astro/icons/database-backup';
+import FileText from '@lucide/astro/icons/file-text';
+import Gauge from '@lucide/astro/icons/gauge';
+import Globe from '@lucide/astro/icons/globe';
+import GraduationCap from '@lucide/astro/icons/graduation-cap';
+import HardDriveDownload from '@lucide/astro/icons/hard-drive-download';
+import HeartHandshake from '@lucide/astro/icons/heart-handshake';
+import Laptop from '@lucide/astro/icons/laptop';
+import LifeBuoy from '@lucide/astro/icons/life-buoy';
+import Mail from '@lucide/astro/icons/mail';
+import Monitor from '@lucide/astro/icons/monitor';
+import MonitorCog from '@lucide/astro/icons/monitor-cog';
+import Palette from '@lucide/astro/icons/palette';
+import PcCase from '@lucide/astro/icons/pc-case';
+import Printer from '@lucide/astro/icons/printer';
+import RefreshCw from '@lucide/astro/icons/refresh-cw';
+import Router from '@lucide/astro/icons/router';
+import Search from '@lucide/astro/icons/search';
+import SearchCheck from '@lucide/astro/icons/search-check';
+import Server from '@lucide/astro/icons/server';
+import ShieldCheck from '@lucide/astro/icons/shield-check';
+import Smartphone from '@lucide/astro/icons/smartphone';
+import Users from '@lucide/astro/icons/users';
+import Wifi from '@lucide/astro/icons/wifi';
+import Wrench from '@lucide/astro/icons/wrench';
+import Bitcoin from '@lucide/astro/icons/bitcoin';
+
+interface Props {
+  lead: string;
+  services: { name: string; href: string; html: string }[];
+}
+const { lead, services } = Astro.props;
+
+// First matching keyword picks the icon
+const iconRules: [RegExp, typeof Wrench][] = [
+  [/battery/i, BatteryCharging],
+  [/screen/i, Monitor],
+  [/laptop sales/i, Laptop],
+  [/apple|mac/i, Laptop],
+  [/laptop/i, Laptop],
+  [/security/i, ShieldCheck],
+  [/virus|spyware/i, Bug],
+  [/tune/i, Gauge],
+  [/cloud/i, Cloud],
+  [/backup|transfer/i, DatabaseBackup],
+  [/recovery/i, HardDriveDownload],
+  [/email|domain/i, Mail],
+  [/troubleshoot/i, LifeBuoy],
+  [/hardware/i, Cpu],
+  [/insurance/i, FileText],
+  [/mobile/i, Smartphone],
+  [/operating|windows/i, MonitorCog],
+  [/wireless|nbn/i, Wifi],
+  [/equipment/i, Printer],
+  [/software/i, AppWindow],
+  [/training/i, GraduationCap],
+  [/build/i, PcCase],
+  [/seo|search engine/i, SearchCheck],
+  [/logo|pamphlet|business card/i, Palette],
+  [/redesign|update/i, RefreshCw],
+  [/hosting/i, Globe],
+  [/website/i, Globe],
+  [/gsuite|office 365/i, Briefcase],
+  [/server/i, Server],
+  [/preventative|maintenance/i, CalendarCheck],
+  [/advice/i, HeartHandshake],
+  [/isp|deal/i, Router],
+  [/crypto/i, Bitcoin],
+  [/family/i, Users],
+  [/setup|set up/i, MonitorCog],
+  [/repair/i, Wrench],
+];
+const iconFor = (name: string) => iconRules.find(([re]) => re.test(name))?.[1] ?? Wrench;
+const tones = ['bg-primary text-white', 'bg-accent text-ink', 'bg-cta text-white'];
+// Extra search words people type that the WordPress text doesn't use (search only, not shown)
+const synonyms: [RegExp, string][] = [
+  [/wireless|network|nbn|isp/i, 'wifi wi-fi internet router modem broadband'],
+  [/virus|spyware|security/i, 'malware hacked scam antivirus ransomware'],
+  [/screen/i, 'display cracked broken lcd monitor'],
+  [/tune|maintenance/i, 'slow speed fast clean'],
+  [/backup|recovery|cloud/i, 'lost files photos deleted restore'],
+  [/battery/i, 'charge charging power'],
+  [/mac|apple/i, 'macbook imac'],
+  [/email|domain|gsuite|office/i, 'outlook gmail microsoft'],
+  [/printer|equipment/i, 'printer scanner webcam'],
+  [/operating|windows/i, 'windows 11 reinstall'],
+];
+const extraWords = (name: string) => synonyms.filter(([re]) => re.test(name)).map(([, w]) => w).join(' ');
+---
+
+<div data-directory class="is-collapsed">
+  <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <p class="max-w-2xl font-display text-2xl leading-snug font-extrabold text-ink sm:text-3xl">{lead}</p>
+    <label class="relative block w-full lg:max-w-sm">
+      <span class="sr-only">Search our services</span>
+      <Search size={18} class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+      <input
+        type="search"
+        data-filter
+        placeholder="Search services, e.g. virus, wifi, screen"
+        class="h-13 w-full rounded-xl border-2 border-slate-200 bg-white pr-4 pl-11 text-base text-ink transition outline-none placeholder:text-slate-400 focus:border-primary"
+        autocomplete="off"
+      />
+    </label>
+  </div>
+  <p class="mt-3 text-sm font-semibold text-slate-500" data-count aria-live="polite">{services.length} services</p>
+
+  <ul class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" role="list">
+    {
+      services.map((s, i) => {
+        const Icon = iconFor(s.name);
+        return (
+          <li data-item data-extra={i >= 12 ? '' : undefined} data-text={`${s.name} ${s.html.replace(/<[^>]+>/g, '')} ${extraWords(s.name)}`.toLowerCase()} class="group relative rounded-2xl bg-white p-5 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift hover:ring-primary/40">
+            <div class="flex items-start gap-4">
+              <span class:list={['grid size-11 shrink-0 place-items-center rounded-xl', tones[i % 3]]}>
+                <Icon size={20} aria-hidden="true" />
+              </span>
+              <div class="min-w-0">
+                <a href={s.href} class="font-display text-[17px] leading-snug font-extrabold text-ink hover:text-primary">
+                  {s.name}
+                </a>
+                <p class="mt-1.5 text-[14.5px] leading-relaxed text-slate-600 [&_a]:text-slate-600 [&_a]:no-underline" set:html={s.html} />
+              </div>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ul>
+  {
+    services.length > 12 && (
+      <div class="mt-8 text-center" data-more-wrap>
+        <button type="button" data-more class="btn-outline">
+          Show all {services.length} services
+        </button>
+      </div>
+    )
+  }
+  <p data-empty hidden class="mt-6 rounded-xl bg-primary-tint p-5 text-slate-600">
+    No service matches that search. Call us and describe the problem.
+  </p>
+</div>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-directory]')) {
+    const input = root.querySelector<HTMLInputElement>('[data-filter]')!;
+    const items = [...root.querySelectorAll<HTMLElement>('[data-item]')];
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    const empty = root.querySelector<HTMLElement>('[data-empty]')!;
+    const total = items.length;
+    const more = root.querySelector<HTMLButtonElement>('[data-more]');
+    more?.addEventListener('click', () => {
+      root.classList.remove('is-collapsed');
+      more.parentElement!.hidden = true;
+    });
+    input.addEventListener('input', () => {
+      if (input.value.trim()) {
+        root.classList.remove('is-collapsed');
+        if (more) more.parentElement!.hidden = true;
+      }
+      const q = input.value.trim().toLowerCase();
+      let shown = 0;
+      for (const it of items) {
+        const hit = !q || q.split(/\s+/).every((w) => it.dataset.text!.includes(w));
+        it.hidden = !hit;
+        if (hit) shown++;
+      }
+      count.textContent = q ? `${shown} of ${total} services` : `${total} services`;
+      empty.hidden = shown > 0;
+    });
+  }
+</script>
+
+<style>
+  [data-directory].is-collapsed [data-extra] {
+    display: none;
+  }
+</style>

@@ -1,0 +1,60 @@
+---
+// Light hero banner with the page's single H1 + call / quote buttons (North Lakes brand).
+// Pass content into the default slot to show a panel on the right (used on the homepage).
+import FileText from '@lucide/astro/icons/file-text';
+import Phone from '@lucide/astro/icons/phone';
+import { site } from '../config/site';
+
+interface Props {
+  title: string;
+  eyebrow?: string;
+  meta?: string;
+  showCtas?: boolean;
+  size?: 'lg' | 'md';
+}
+const { title, eyebrow, meta, showCtas = true, size = 'md' } = Astro.props;
+const hasAside = Astro.slots.has('default');
+---
+
+<section class="relative isolate overflow-hidden bg-gradient-to-b from-primary-tint to-white">
+  <!-- soft brand shapes -->
+  <div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+    <div class="absolute -top-32 -right-24 size-[28rem] rounded-full bg-primary-soft blur-3xl"></div>
+    <div class="absolute -bottom-40 -left-24 size-[22rem] rounded-full bg-accent-soft/60 blur-3xl"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(40_90_133/0.09)_1px,transparent_0)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]"></div>
+  </div>
+
+  <div
+    class:list={[
+      'container-site grid items-center gap-12',
+      size === 'lg' ? 'py-16 sm:py-24' : 'py-12 sm:py-16',
+      hasAside && 'lg:grid-cols-[minmax(0,1fr)_400px]',
+    ]}
+  >
+    <div>
+      {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+      <h1
+        class:list={[
+          'max-w-4xl text-primary',
+          size === 'lg' ? 'text-[2.4rem] leading-[1.08] font-extrabold sm:text-6xl' : 'text-3xl leading-tight sm:text-5xl',
+        ]}
+      >
+        {title}
+      </h1>
+      {meta && <p class="mt-4 text-slate-500">{meta}</p>}
+      {
+        showCtas && (
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-14 px-7 text-lg">
+              <Phone size={20} aria-hidden="true" /> Call {site.phone.display}
+            </a>
+            <a href={site.quoteUrl} class="btn-outline min-h-14 px-7 text-lg">
+              <FileText size={19} aria-hidden="true" /> Get a Quote
+            </a>
+          </div>
+        )
+      }
+    </div>
+    {hasAside && <div class="hidden lg:block"><slot /></div>}
+  </div>
+</section>

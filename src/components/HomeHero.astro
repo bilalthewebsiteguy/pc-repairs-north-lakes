@@ -1,0 +1,89 @@
+---
+// Homepage hero: the one bold moment on the site.
+// Big steel-blue block, the homepage H1 set large in white, the old site's
+// "CALL 07 3144 6766 / Servicing Moreton Bay and Brisbane Northside" lines, and the suburb checker.
+import FileText from '@lucide/astro/icons/file-text';
+import Phone from '@lucide/astro/icons/phone';
+import Clock from '@lucide/astro/icons/clock';
+import House from '@lucide/astro/icons/house';
+import BadgeCheck from '@lucide/astro/icons/badge-check';
+import MapPin from '@lucide/astro/icons/map-pin';
+import { getCollection } from 'astro:content';
+import { site } from '../config/site';
+import SuburbChecker from './SuburbChecker.astro';
+
+interface Props {
+  title: string; // the homepage's single H1, same words as WordPress
+}
+const { title } = Astro.props;
+
+// Trust strip: every line below is taken from the client's own WordPress content
+// (SEO title "Same Day Service", the FAQ "onsite support at your home or office",
+// "Microsoft Certified ... 10+ years", and the number of suburb pages).
+const suburbCount = (await getCollection('pages', (p) => p.data.slug?.startsWith('computer-repairs-'))).length;
+const facts = [
+  { icon: Clock, title: 'Same day service', text: "We get back to you the same day" },
+  { icon: House, title: 'Onsite support', text: 'At your home or office' },
+  { icon: BadgeCheck, title: 'Microsoft Certified', text: 'Technicians with 10+ years' },
+  { icon: MapPin, title: `${suburbCount} suburbs`, text: 'Across Moreton Bay & Northside' },
+];
+---
+
+<section class="relative isolate flex flex-col overflow-hidden bg-primary text-white lg:min-h-[640px]">
+  <!-- one large golden arc behind the headline: a nod to the old site's golden service titles -->
+  <svg class="pointer-events-none absolute -right-56 -bottom-72 -z-10 size-[52rem] text-accent" viewBox="0 0 200 200" aria-hidden="true">
+    <circle cx="100" cy="100" r="96" fill="none" stroke="currentColor" stroke-width="1.2"></circle>
+    <circle cx="100" cy="100" r="80" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"></circle>
+  </svg>
+
+  <div class="container-site grid flex-1 items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-16 lg:py-20">
+    <div>
+      <h1 class="font-display text-[2.1rem] leading-[1.05] font-extrabold tracking-[-0.02em] text-white sm:text-5xl xl:text-[3.4rem]">
+        {title}
+      </h1>
+      <p class="mt-7 max-w-xl text-xl text-white/85">Servicing {site.area}</p>
+      <div class="mt-12 flex flex-col gap-3 sm:flex-row">
+        <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6 text-base sm:text-lg">
+          <Phone size={19} aria-hidden="true" /> Call {site.phone.display}
+        </a>
+        <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6 text-base sm:text-lg">
+          <FileText size={18} aria-hidden="true" /> Get a Quote
+        </a>
+      </div>
+
+      <!-- Head technician: photo and words from the WordPress "About" section -->
+      <figure class="mt-12 flex items-center gap-4">
+        <img
+          src="/images/robert.png"
+          alt="Robert, Head Technician at PC Repairs North Lakes"
+          width="150"
+          height="158"
+          class="size-16 shrink-0 rounded-full object-cover ring-4 ring-accent"
+        />
+        <figcaption class="leading-snug">
+          <span class="block font-display font-bold text-white">Robert, Head Technician</span>
+          <span class="block text-sm text-white/75">Formerly with IBM, fixing computer hardware and software</span>
+        </figcaption>
+      </figure>
+    </div>
+    <SuburbChecker />
+  </div>
+
+  <div class="relative border-t border-white/15 bg-primary-dark">
+    <ul class="container-site grid grid-cols-2 gap-x-6 gap-y-6 py-7 lg:grid-cols-4">
+      {
+        facts.map(({ icon: Icon, title, text }) => (
+          <li class="flex items-center gap-3.5">
+            <span class="grid size-11 shrink-0 place-items-center rounded-full bg-accent text-ink">
+              <Icon size={20} aria-hidden="true" />
+            </span>
+            <span class="leading-tight">
+              <span class="block font-display font-bold text-white">{title}</span>
+              <span class="mt-0.5 block text-sm text-white/75">{text}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

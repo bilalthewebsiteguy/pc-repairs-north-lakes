@@ -1,0 +1,19 @@
+---
+// Thin steel-blue bar above the header - echoes the old site's blue "CALL 07 3144 6766" bar.
+import Clock from '@lucide/astro/icons/clock';
+import MapPin from '@lucide/astro/icons/map-pin';
+import { site } from '../config/site';
+---
+
+<div class="bg-primary text-[13px] text-white/85">
+  <div class="container-site flex h-9 items-center justify-center gap-6 md:justify-between">
+    <p class="flex min-w-0 items-center gap-2 truncate">
+      <MapPin size={14} class="shrink-0 text-accent" aria-hidden="true" />
+      <span class="truncate">Servicing {site.area}</span>
+    </p>
+    <p class="hidden items-center gap-2 md:flex">
+      <Clock size={14} class="text-accent" aria-hidden="true" />
+      <span class="font-bold text-white">Same-day service</span>
+    </p>
+  </div>
+</div>

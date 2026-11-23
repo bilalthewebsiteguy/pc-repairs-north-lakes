@@ -1,0 +1,155 @@
+---
+/**
+ * One laptop part drawn on its own in the same isometric line style as the "Which part is
+ * playing up?" explorer: screen, keyboard, motherboard, hard drive, DC jack, or a tune-up gauge.
+ * The viewBox is worked out from the drawing, so each part fills its panel.
+ */
+interface Props {
+  part: string;
+  class?: string;
+}
+const { part, class: className } = Astro.props;
+
+let minX = Infinity;
+let minY = Infinity;
+let maxX = -Infinity;
+let maxY = -Infinity;
+const pt = (x: number, y: number, z: number) => {
+  const px = (x - y) * 0.866;
+  const py = (x + y) * 0.5 - z;
+  minX = Math.min(minX, px);
+  maxX = Math.max(maxX, px);
+  minY = Math.min(minY, py);
+  maxY = Math.max(maxY, py);
+  return `${px.toFixed(1)},${py.toFixed(1)}`;
+};
+const quad = (a: number[], b: number[], c: number[], d: number[]) =>
+  `M${pt(a[0], a[1], a[2])} L${pt(b[0], b[1], b[2])} L${pt(c[0], c[1], c[2])} L${pt(d[0], d[1], d[2])} Z`;
+const box = (x: number, y: number, z: number, w: number, d: number, h: number) => ({
+  top: quad([x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]),
+  front: quad([x, y + d, z + h], [x + w, y + d, z + h], [x + w, y + d, z], [x, y + d, z]),
+  side: quad([x + w, y, z + h], [x + w, y + d, z + h], [x + w, y + d, z], [x + w, y, z]),
+});
+const line = (a: number[], b: number[]) => `M${pt(a[0], a[1], a[2])} L${pt(b[0], b[1], b[2])}`;
+const many = (...ls: string[]) => ls.join(' ');
+
+type Shape = { d: string; kind: 'face' | 'top' | 'detail' | 'gold' };
+let shapes: Shape[] = [];
+let gauge = false;
+
+const solid = (b: ReturnType<typeof box>): Shape[] => [
+  { d: b.front, kind: 'face' },
+  { d: b.side, kind: 'face' },
+  { d: b.top, kind: 'top' },
+];
+
+switch (part) {
+  case 'screenrepair': {
+    const lid = box(0, 0, 0, 260, 160, 8);
+    shapes = [
+      ...solid(lid),
+      { d: quad([14, 14, 8], [246, 14, 8], [246, 146, 8], [14, 146, 8]), kind: 'detail' },
+      { d: many(line([130, 50, 8], [152, 78, 8]), line([152, 78, 8], [146, 108, 8]), line([152, 78, 8], [190, 90, 8]), line([146, 108, 8], [168, 126, 8]), line([152, 78, 8], [126, 96, 8])), kind: 'gold' },
+    ];
+    break;
+  }
+  case 'keyboard': {
+    const deck = box(0, 0, 0, 260, 160, 8);
+    const keys: string[] = [];
+    for (const y of [22, 38, 54, 70, 86]) for (let x = 22; x < 238; x += 18) keys.push(quad([x, y, 8], [x + 14, y, 8], [x + 14, y + 12, 8], [x, y + 12, 8]));
+    shapes = [
+      ...solid(deck),
+      { d: keys.join(' '), kind: 'detail' },
+      { d: quad([96, 108, 8], [164, 108, 8], [164, 146, 8], [96, 146, 8]), kind: 'gold' },
+    ];
+    break;
+  }
+  case 'motherbo': {
+    const board = box(0, 0, 0, 240, 150, 5);
+    const cpu = box(40, 35, 5, 55, 55, 12);
+    const ram1 = box(130, 28, 5, 90, 13, 14);
+    const ram2 = box(130, 52, 5, 90, 13, 14);
+    const caps = [box(40, 112, 5, 12, 12, 14), box(62, 112, 5, 12, 12, 14), box(180, 105, 5, 30, 24, 8)];
+    shapes = [
+      ...solid(board),
+      { d: many(line([67, 90, 5], [67, 140, 5]), line([95, 62, 5], [130, 62, 5]), line([10, 62, 5], [40, 62, 5]), line([150, 75, 5], [150, 120, 5]), line([150, 120, 5], [180, 120, 5])), kind: 'detail' },
+      ...solid(ram1),
+      ...solid(ram2),
+      ...caps.flatMap(solid),
+      ...solid(cpu),
+      { d: quad([52, 47, 17], [83, 47, 17], [83, 78, 17], [52, 78, 17]), kind: 'gold' },
+    ];
+    break;
+  }
+  case 'harddrive': {
+    const drive = box(0, 0, 0, 200, 130, 24);
+    const c = pt(85, 65, 24);
+    const [cx, cy] = c.split(',').map(Number);
+    shapes = [
+      ...solid(drive),
+      { d: `M${cx - 66},${cy} a66,38 0 1,0 132,0 a66,38 0 1,0 -132,0`, kind: 'detail' },
+      { d: `M${cx - 14},${cy} a14,8 0 1,0 28,0 a14,8 0 1,0 -28,0`, kind: 'detail' },
+      { d: many(line([175, 20, 24], [150, 40, 24]), line([150, 40, 24], [105, 70, 24])), kind: 'gold' },
+      { d: many(line([30, 130, 8], [70, 130, 8]), line([30, 130, 14], [70, 130, 14])), kind: 'detail' },
+    ];
+    break;
+  }
+  case 'dcjack': {
+    const base = box(0, 0, 0, 200, 120, 26);
+    const plug = box(40, 175, 6, 26, 40, 14);
+    shapes = [
+      ...solid(base),
+      { d: quad([40, 120, 20], [66, 120, 20], [66, 120, 8], [40, 120, 8]), kind: 'detail' },
+      ...solid(plug),
+      { d: many(line([53, 215, 13], [53, 250, 13]), line([53, 250, 13], [30, 290, 13])), kind: 'gold' },
+      { d: many(line([53, 160, 13], [53, 140, 13])), kind: 'gold' },
+    ];
+    break;
+  }
+  default:
+    gauge = true;
+}
+
+const pad = 18;
+const viewBox = gauge ? '0 0 240 170' : `${(minX - pad).toFixed(0)} ${(minY - pad).toFixed(0)} ${(maxX - minX + pad * 2).toFixed(0)} ${(maxY - minY + pad * 2).toFixed(0)}`;
+---
+
+<svg viewBox={viewBox} class:list={['iso-part', className]} fill="none" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+  {
+    gauge ? (
+      <g>
+        <path d="M30 140 A90 90 0 0 1 210 140" class="iso-face" stroke-width="10" />
+        <path d="M30 140 A90 90 0 0 1 165 62" class="iso-gold" stroke-width="10" />
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+          const a = Math.PI - (i * Math.PI) / 6;
+          return <path d={`M${120 + 72 * Math.cos(a)} ${140 - 72 * Math.sin(a)} L${120 + 62 * Math.cos(a)} ${140 - 62 * Math.sin(a)}`} class="iso-detail" />;
+        })}
+        <path d="M120 140 L172 84" class="iso-gold" stroke-width="4" />
+        <circle cx="120" cy="140" r="9" class="iso-top" />
+      </g>
+    ) : (
+      shapes.map((s) => <path d={s.d} class={`iso-${s.kind}`} />)
+    )
+  }
+</svg>
+
+<style>
+  .iso-part .iso-face {
+    stroke: rgb(255 255 255 / 0.55);
+    stroke-width: 1.4;
+    fill: color-mix(in oklab, var(--brand-ink), white 6%);
+  }
+  .iso-part .iso-top {
+    stroke: var(--brand-accent);
+    stroke-width: 1.6;
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-accent) 14%);
+  }
+  .iso-part .iso-detail {
+    stroke: rgb(255 255 255 / 0.4);
+    stroke-width: 1.1;
+  }
+  .iso-part .iso-gold {
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+  }
+</style>

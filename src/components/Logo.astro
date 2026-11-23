@@ -1,0 +1,29 @@
+---
+/**
+ * The original WordPress logo image (PRN-Logo1.png, 450x55, navy on transparent).
+ * On dark backgrounds (footer) it is turned white with a CSS filter.
+ */
+import { site } from '../config/site';
+
+interface Props {
+  /** White logo for dark backgrounds (footer). */
+  onDark?: boolean;
+  size?: 'md' | 'lg';
+}
+const { onDark = false, size = 'md' } = Astro.props;
+---
+
+<a href="/" class="inline-flex shrink-0 items-center select-none" aria-label={`${site.businessName} — home`}>
+  <img
+    src="/images/PRN-Logo1.png"
+    alt="Computer Repairs Northlakes and Northside of Brisbane"
+    width="450"
+    height="55"
+    decoding="async"
+    class:list={[
+      'block h-auto',
+      size === 'lg' ? 'w-[260px]' : 'w-[190px] sm:w-[240px] lg:w-[260px]',
+      onDark && '[filter:brightness(0)_invert(1)]',
+    ]}
+  />
+</a>

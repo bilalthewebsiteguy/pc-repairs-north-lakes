@@ -1,0 +1,106 @@
+---
+/**
+ * Line-art scene for the top of the footer, drawn for the North Lakes / Moreton Bay area
+ * (left to right): Glass House Mountains, palms, a Queenslander house, North Lakes lake with a
+ * sailboat and fountain, the shopping centre, a long bay bridge and a Redcliffe-line train.
+ * Pure SVG (no images), so it is sharp at any size and costs almost nothing to load.
+ */
+---
+
+<div class="pointer-events-none overflow-hidden" aria-hidden="true">
+  <svg
+    viewBox="0 96 1440 184"
+    preserveAspectRatio="xMidYMax slice"
+    class="mt-10 block h-28 w-full text-white/25 sm:h-40 lg:h-48"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.3"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+  >
+    <!-- ground -->
+    <path d="M0 270 H1440" />
+
+    <!-- Glass House Mountains -->
+    <path d="M10 270 L48 200 L62 214 L92 120 L104 112 L118 150 L136 170 L160 270" />
+    <path d="M150 270 L182 196 L192 160 L204 152 L214 176 L240 214 L262 270" />
+    <path d="M96 126 L100 160 M196 168 L200 200" stroke-dasharray="3 6" />
+
+    <!-- palms -->
+    <g>
+      <path d="M300 270 C298 230 302 200 310 172" />
+      <path d="M310 172 C290 164 276 170 266 182 M310 172 C318 152 334 148 348 152 M310 172 C330 170 342 182 346 196 M310 172 C300 154 286 150 274 156 M310 172 C304 186 290 196 280 200" />
+      <path d="M350 270 C350 240 352 222 358 206" />
+      <path d="M358 206 C344 200 334 204 326 214 M358 206 C364 192 376 190 386 194 M358 206 C372 206 380 216 382 226 M358 206 C352 194 342 190 334 194" />
+    </g>
+
+    <!-- Queenslander house: raised on stumps, verandah, pitched tin roof -->
+    <g>
+      <path d="M392 196 L474 140 L556 196" />
+      <path d="M404 188 V196 M544 188 V196" />
+      <path d="M398 196 H550" />
+      <rect x="404" y="196" width="140" height="44" />
+      <path d="M404 210 H544" />
+      <path d="M414 210 V240 M424 210 V240 M434 210 V240 M444 210 V240 M504 210 V240 M514 210 V240 M524 210 V240 M534 210 V240" stroke-dasharray="2 3" />
+      <rect x="460" y="208" width="28" height="32" />
+      <path d="M474 208 V240" />
+      <path d="M474 156 V176 M464 166 H484" />
+      <path d="M410 240 V270 M440 240 V270 M474 240 V270 M508 240 V270 M538 240 V270" />
+      <path d="M474 240 L496 270 M478 248 H492 M484 256 H496" />
+      <path d="M410 255 L440 240 M440 255 L410 240" stroke-dasharray="3 4" />
+    </g>
+
+    <!-- North Lakes lake: water, sailboat, fountain -->
+    <g>
+      <path d="M580 270 C610 262 640 262 670 270 C700 262 730 262 760 270" />
+      <path d="M598 258 h22 M650 256 h30 M708 258 h24" stroke-dasharray="6 5" />
+      <path d="M612 246 H660 L652 256 H620 Z" />
+      <path d="M636 246 V178 L664 240 H636" />
+      <path d="M636 186 L614 240 H636" />
+      <path d="M712 256 V214" />
+      <path d="M712 214 C700 196 690 196 684 210 M712 214 C724 196 734 196 740 210 M712 214 C708 192 712 182 718 180" />
+      <path d="M690 222 v4 M734 222 v4 M700 234 v3 M724 234 v3" />
+    </g>
+
+    <!-- shopping centre: long low building with a curved canopy -->
+    <g>
+      <path d="M790 270 V186 H1050 V270" />
+      <path d="M790 186 C860 150 980 150 1050 186" />
+      <path d="M800 200 H1040" />
+      <path d="M830 200 V270 M870 200 V270 M970 200 V270 M1010 200 V270" stroke-dasharray="3 6" />
+      <path d="M890 270 V224 H950 V270" />
+      <path d="M920 224 V270" />
+      <path d="M884 224 C900 210 940 210 956 224" />
+      <rect x="880" y="160" width="80" height="18" rx="2" />
+      <path d="M1066 270 V214 M1066 214 C1058 204 1060 190 1068 184 M1066 214 C1076 204 1076 192 1070 184" />
+      <path d="M1090 270 V230 M1090 230 C1082 222 1084 212 1090 206 M1090 230 C1098 222 1098 212 1092 206" />
+    </g>
+
+    <!-- long bay bridge -->
+    <g>
+      <path d="M1110 222 H1300" />
+      <path d="M1110 230 H1300" />
+      <path d="M1130 230 C1146 246 1166 246 1182 230 M1182 230 C1198 246 1218 246 1234 230 M1234 230 C1250 246 1270 246 1286 230" />
+      <path d="M1130 230 V270 M1182 230 V270 M1234 230 V270 M1286 230 V270" />
+      <path d="M1110 222 V212 M1150 222 V212 M1190 222 V212 M1230 222 V212 M1270 222 V212 M1300 222 V212 M1110 212 H1300" stroke-dasharray="2 4" />
+      <path d="M1140 262 h18 M1196 262 h22 M1248 262 h20" stroke-dasharray="5 4" />
+    </g>
+
+    <!-- Redcliffe-line train -->
+    <g>
+      <path d="M1300 238 H1440" />
+      <path d="M1312 238 V196 C1312 186 1320 178 1332 178 H1440" />
+      <path d="M1312 210 H1440" />
+      <rect x="1330" y="188" width="22" height="16" rx="2" />
+      <rect x="1364" y="188" width="22" height="16" rx="2" />
+      <rect x="1398" y="188" width="22" height="16" rx="2" />
+      <path d="M1360 214 V234 M1428 214 V234" />
+      <circle cx="1330" cy="242" r="4" />
+      <circle cx="1346" cy="242" r="4" />
+      <circle cx="1404" cy="242" r="4" />
+      <circle cx="1420" cy="242" r="4" />
+      <path d="M1300 250 H1440 M1310 250 V270 M1380 250 V270" />
+      <path d="M1330 178 L1346 164 H1376 M1340 172 L1360 160" />
+    </g>
+  </svg>
+</div>

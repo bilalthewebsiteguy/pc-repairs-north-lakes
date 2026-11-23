@@ -1,0 +1,145 @@
+---
+/**
+ * The page's 12 "OUR SERVICES" write-ups shown as a desktop computer: a dock of services on
+ * the left and an app window on the right showing the full WordPress text of the picked one.
+ * All 12 texts are in the page; only the picked one shows. Each keeps its own heading.
+ */
+import AppWindow from '@lucide/astro/icons/app-window';
+import Bug from '@lucide/astro/icons/bug';
+import Cpu from '@lucide/astro/icons/cpu';
+import DatabaseBackup from '@lucide/astro/icons/database-backup';
+import Gauge from '@lucide/astro/icons/gauge';
+import Mail from '@lucide/astro/icons/mail';
+import MemoryStick from '@lucide/astro/icons/memory-stick';
+import Monitor from '@lucide/astro/icons/monitor';
+import Phone from '@lucide/astro/icons/phone';
+import Printer from '@lucide/astro/icons/printer';
+import ShieldCheck from '@lucide/astro/icons/shield-check';
+import Wifi from '@lucide/astro/icons/wifi';
+import Wrench from '@lucide/astro/icons/wrench';
+import { site } from '../config/site';
+
+interface Props {
+  title: string; // "OUR SERVICES" (WordPress text)
+  items: { title: string; html: string }[];
+}
+const { title, items } = Astro.props;
+const icons: [RegExp, typeof Wrench][] = [
+  [/repairs?$/i, Wrench],
+  [/tune/i, Gauge],
+  [/upgrade/i, MemoryStick],
+  [/security/i, ShieldCheck],
+  [/virus/i, Bug],
+  [/data/i, DatabaseBackup],
+  [/equipment/i, Printer],
+  [/wireless|network/i, Wifi],
+  [/new computer/i, Monitor],
+  [/software/i, AppWindow],
+  [/hardware/i, Cpu],
+  [/email/i, Mail],
+];
+const iconFor = (t: string) => icons.find(([re]) => re.test(t))?.[1] ?? Wrench;
+const slug = (t: string) => 'svc-' + t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const linkStyle =
+  '[&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:decoration-accent [&_a]:decoration-2 [&_a]:underline-offset-4 [&_strong]:text-ink';
+---
+
+<section class="relative isolate overflow-hidden bg-ink py-16 text-white sm:py-20" aria-labelledby="our-services-title" data-svcwin>
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:radial-gradient(white_1px,transparent_1px)] [background-size:22px_22px]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="container-site">
+    <p id="our-services-title" class="font-display text-3xl font-extrabold tracking-wide sm:text-4xl">{title}</p>
+
+    <!-- the "computer": dock + window on a monitor -->
+    <div class="mt-10 rounded-[28px] bg-[#0b1726] p-3 shadow-[0_30px_80px_-20px_rgb(0_0_0_/_0.6)] ring-1 ring-white/10 sm:p-4">
+      <div class="grid grid-cols-1 overflow-hidden rounded-2xl bg-primary-deep lg:grid-cols-[290px_minmax(0,1fr)]">
+        <!-- dock -->
+        <nav aria-label="Our services" class="border-b border-white/10 p-3 lg:border-r lg:border-b-0 lg:p-4">
+          <ul class="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0" role="list">
+            {
+              items.map((it, i) => {
+                const Icon = iconFor(it.title);
+                return (
+                  <li class="shrink-0">
+                    <a
+                      href={`#${slug(it.title)}`}
+                      data-open={slug(it.title)}
+                      aria-pressed={i === 0 ? 'true' : 'false'}
+                      class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold whitespace-nowrap text-white/75 transition hover:bg-white/10 hover:text-white aria-pressed:bg-white aria-pressed:text-ink lg:whitespace-normal"
+                    >
+                      <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-white/10 text-accent transition group-aria-pressed:bg-primary group-aria-pressed:text-white">
+                        <Icon size={16} aria-hidden="true" />
+                      </span>
+                      {it.title}
+                    </a>
+                  </li>
+                );
+              })
+            }
+          </ul>
+        </nav>
+
+        <!-- window -->
+        <div class="bg-[color-mix(in_oklab,var(--brand-primary),black_20%)] p-4 sm:p-6 lg:p-8">
+          {
+            items.map((it, i) => {
+              const Icon = iconFor(it.title);
+              return (
+                <article id={slug(it.title)} data-win={slug(it.title)} hidden={i !== 0} class="scroll-mt-28 overflow-hidden rounded-xl bg-white text-ink shadow-lift">
+                  <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+                    <span class="size-3 rounded-full bg-[#ff5f57]" aria-hidden="true" />
+                    <span class="size-3 rounded-full bg-[#febc2e]" aria-hidden="true" />
+                    <span class="size-3 rounded-full bg-[#28c840]" aria-hidden="true" />
+                    <span class="ml-3 truncate text-xs font-semibold text-slate-500">{it.title}</span>
+                  </div>
+                  <div class="p-6 sm:p-8">
+                    <div class="flex items-center gap-4">
+                      <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-ink">
+                        <Icon size={22} aria-hidden="true" />
+                      </span>
+                      <h2 class="text-2xl font-extrabold sm:text-[1.7rem]">{it.title}</h2>
+                    </div>
+                    <div class:list={['mt-5 space-y-4 leading-relaxed text-slate-600', linkStyle]} set:html={it.html} />
+                    <div class="mt-7 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row">
+                      <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-11 px-5 text-sm">
+                        <Phone size={16} aria-hidden="true" /> Call {site.phone.display}
+                      </a>
+                      <a href={site.quoteUrl} class="btn-outline min-h-11 px-5 text-sm">Get a Quote</a>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          }
+        </div>
+      </div>
+    </div>
+    <!-- monitor stand -->
+    <div class="mx-auto h-6 w-28 bg-[#0b1726] [clip-path:polygon(18%_0,82%_0,100%_100%,0_100%)]" aria-hidden="true"></div>
+    <div class="mx-auto h-2 w-56 rounded-full bg-[#0b1726]" aria-hidden="true"></div>
+  </div>
+</section>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-svcwin]')) {
+    const open = (id: string) => {
+      root.querySelectorAll<HTMLElement>('[data-open]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.open === id)));
+      root.querySelectorAll<HTMLElement>('[data-win]').forEach((w) => (w.hidden = w.dataset.win !== id));
+    };
+    root.querySelectorAll<HTMLAnchorElement>('[data-open]').forEach((b) =>
+      b.addEventListener('click', (e) => {
+        e.preventDefault();
+        open(b.dataset.open!);
+      }),
+    );
+    const fromHash = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      if (id && root.querySelector(`[data-win="${CSS.escape(id)}"]`)) open(id);
+    };
+    window.addEventListener('hashchange', fromHash);
+    fromHash();
+  }
+</script>

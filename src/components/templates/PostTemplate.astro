@@ -1,16 +1,16 @@
 ---
-// Blog posts (127). Keep <Content /> (the original text) as it is.
-const { data } = Astro.props;
+// Blog posts (127)
+// Not designed yet - plain layout. Keep <slot /> (the original text) as it is.
+interface Props {
+  data: { title: string };
+  heading: string; // the page's single H1 (same words as the WordPress page)
+}
+const { heading } = Astro.props;
 ---
 
-<article class="mx-auto max-w-3xl px-4 py-12">
-  <h1 class="mb-2 text-3xl font-bold">{data.h1 || data.title}</h1>
-  {data.date && (
-    <p class="mb-8 text-sm text-slate-500">
-      {data.date.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}
-    </p>
-  )}
-  <div class="prose max-w-none">
+<section class="mx-auto max-w-6xl px-4 py-12">
+  <h1 class="mb-6 text-3xl font-bold">{heading}</h1>
+  <article class="prose max-w-none">
     <slot />
-  </div>
-</article>
+  </article>
+</section>

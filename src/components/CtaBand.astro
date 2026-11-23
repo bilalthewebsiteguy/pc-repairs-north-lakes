@@ -1,0 +1,42 @@
+---
+// Closing call-to-action band in the North Lakes brand (steel blue + orange call button).
+import ArrowRight from '@lucide/astro/icons/arrow-right';
+import Check from '@lucide/astro/icons/check';
+import Phone from '@lucide/astro/icons/phone';
+import { site } from '../config/site';
+
+interface Props {
+  title?: string;
+}
+const { title = 'Computer playing up? Let’s get it sorted.' } = Astro.props;
+const points = ['Same-day service', 'Laptop, PC & Mac repairs', 'Home & business call-outs', site.area];
+---
+
+<section class="relative isolate overflow-hidden bg-primary py-16 text-white sm:py-20" aria-labelledby="cta-title">
+  <div class="pointer-events-none absolute -top-24 -right-24 -z-10 size-96 rounded-full bg-white/10 blur-3xl" aria-hidden="true"></div>
+  <div class="container-site" data-reveal>
+    <div class="max-w-4xl">
+    <h2 id="cta-title" class="text-[2rem] leading-[1.1] font-extrabold text-white sm:text-5xl">{title}</h2>
+    <ul class="mt-8 grid gap-3 sm:grid-cols-2">
+      {
+        points.map((p) => (
+          <li class="flex items-center gap-3 font-semibold">
+            <span class="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-ink">
+              <Check size={15} stroke-width={3.5} aria-hidden="true" />
+            </span>
+            {p}
+          </li>
+        ))
+      }
+    </ul>
+    <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-16 px-8 text-xl">
+        <Phone size={22} aria-hidden="true" /> {site.phone.display}
+      </a>
+      <a href={site.quoteUrl} class="btn-outline-light min-h-16 px-8 text-lg">
+        Get a free quote <ArrowRight size={20} aria-hidden="true" />
+      </a>
+    </div>
+    </div>
+  </div>
+</section>

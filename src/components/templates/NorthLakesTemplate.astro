@@ -1,0 +1,277 @@
+---
+// Computer Repairs North Lakes (/computer-repairs-north-lakes/). Same words as WordPress
+// (split by src/lib/northlakes.ts), laid out as: radar-map hero, intro, searchable service
+// directory, the 12 service write-ups in a desktop "window", a why-choose-us tile grid,
+// the hardware callout, the FAQ and the areas we serve.
+import Check from '@lucide/astro/icons/check';
+import FileText from '@lucide/astro/icons/file-text';
+import MapPin from '@lucide/astro/icons/map-pin';
+import Phone from '@lucide/astro/icons/phone';
+import Plus from '@lucide/astro/icons/plus';
+import Star from '@lucide/astro/icons/star';
+import Award from '@lucide/astro/icons/award';
+import CalendarCheck from '@lucide/astro/icons/calendar-check';
+import PiggyBank from '@lucide/astro/icons/piggy-bank';
+import Wrench from '@lucide/astro/icons/wrench';
+import Lightbulb from '@lucide/astro/icons/lightbulb';
+import Laptop from '@lucide/astro/icons/laptop';
+import CtaBand from '../CtaBand.astro';
+import NorthLakesRadar from '../NorthLakesRadar.astro';
+import ServiceDirectory from '../ServiceDirectory.astro';
+import ServiceWindow from '../ServiceWindow.astro';
+import { site } from '../../config/site';
+import { faqQuestions } from '../../config/faq';
+import { northLakesSections } from '../../lib/northlakes';
+
+interface Props {
+  heading: string; // the page's single H1 (same words as the WordPress page)
+  body: string; // raw exported markdown of the page
+}
+const { heading, body } = Astro.props;
+const p = await northLakesSections(body);
+
+// Intro split into its paragraphs
+const introParas = p.introHtml.match(/<p>[\s\S]*?<\/p>/g) ?? [p.introHtml];
+
+const linkStyle =
+  '[&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:decoration-accent [&_a]:decoration-2 [&_a]:underline-offset-4 [&_strong]:text-ink';
+
+// Quick facts for the hero, quoted from the page's own intro text
+const facts = ['7am till 10pm daily', 'including weekends and holidays', 'no additional fees charged'].filter((f) =>
+  p.introHtml.includes(f),
+);
+
+// Why-choose-us tiles: size + colour per tile (row spans fill a 3-column grid exactly)
+const whyStyle = [
+  { span: 'lg:col-span-2', box: 'bg-primary text-white', icon: Award, chip: 'bg-accent text-ink', head: 'text-white', text: 'text-white/85' },
+  { span: '', box: 'bg-accent-soft/60', icon: CalendarCheck, chip: 'bg-primary text-white', head: '', text: 'text-slate-700' },
+  { span: '', box: 'bg-white ring-1 ring-slate-200', icon: PiggyBank, chip: 'bg-cta text-white', head: '', text: 'text-slate-600' },
+  { span: 'lg:col-span-2', box: 'bg-primary-tint', icon: Wrench, chip: 'bg-primary text-white', head: '', text: 'text-slate-700' },
+  { span: '', box: 'bg-cta/[0.07]', icon: Lightbulb, chip: 'bg-cta text-white', head: '', text: 'text-slate-700' },
+  { span: 'lg:col-span-2', box: 'bg-ink text-white', icon: Star, chip: 'bg-accent text-ink', head: 'text-white', text: 'text-white/80' },
+];
+// "...more than 200 5-star reviews..." -> big number on the reviews tile
+const reviewsMatch = p.whyChoose.at(-1)?.html.match(/more than (\d+)\s+5-star reviews/);
+---
+
+<!-- Hero: blueprint grid + "we come to you" radar map of North Lakes -->
+<section class="relative isolate overflow-hidden bg-primary text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.09] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px] [mask-image:linear-gradient(to_right,transparent,black_45%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="container-site grid grid-cols-1 items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 lg:py-16">
+    <div>
+      <p class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-sm font-semibold text-white/90 ring-1 ring-white/15">
+        <MapPin size={15} class="text-accent" aria-hidden="true" />
+        {p.tagline}
+      </p>
+      <h1 class="mt-6 font-display text-[2.5rem] leading-[1.02] font-extrabold tracking-[-0.02em] text-white sm:text-6xl xl:text-[4.1rem]">
+        {heading}
+      </h1>
+      {
+        facts.length > 0 && (
+          <ul class="mt-7 space-y-2.5" role="list">
+            {facts.map((f) => (
+              <li class="flex items-center gap-3 text-lg text-white/90">
+                <span class="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-ink">
+                  <Check size={14} stroke-width={3.5} aria-hidden="true" />
+                </span>
+                <span class="first-letter:uppercase">{f}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6 text-base sm:text-lg">
+          <Phone size={19} aria-hidden="true" /> Call {site.phone.display}
+        </a>
+        <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6 text-base sm:text-lg">
+          <FileText size={18} aria-hidden="true" /> Get a Quote
+        </a>
+      </div>
+    </div>
+    <div class="mx-auto w-full max-w-[560px] lg:max-w-none">
+      <NorthLakesRadar />
+    </div>
+  </div>
+</section>
+
+<!-- Intro: first paragraph as a statement, second paragraph + a compact call card beside it -->
+<section class="section">
+  <div class="container-site grid grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:gap-16">
+    <div class="relative pl-6">
+      <span class="absolute top-1 bottom-1 left-0 w-1.5 rounded-full bg-accent" aria-hidden="true"></span>
+      <div class:list={['font-display text-xl leading-snug font-bold text-ink sm:text-2xl sm:leading-snug', linkStyle]} set:html={introParas[0] ?? ''} />
+    </div>
+    <div>
+      <div class:list={['space-y-4 text-lg leading-relaxed text-slate-600', linkStyle]} set:html={introParas.slice(1).join('')} />
+      <div class="relative isolate mt-8 flex flex-col gap-5 overflow-hidden rounded-2xl bg-primary p-6 text-white shadow-lift sm:flex-row sm:items-center sm:justify-between">
+        <div class="pointer-events-none absolute -top-12 -right-12 -z-10 size-36 rounded-full bg-white/10" aria-hidden="true"></div>
+        <p class="font-display text-lg font-extrabold">Need a technician in North Lakes?</p>
+        <div class="flex shrink-0 flex-col gap-2.5 sm:flex-row">
+          <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-11 px-5 text-sm">
+            <Phone size={16} aria-hidden="true" /> {site.phone.display}
+          </a>
+          <a href={site.quoteUrl} class="btn-outline-light min-h-11 px-5 text-sm">Get a Quote</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- "CALL US 07 3144 6766" (WordPress text) as a call strip -->
+<div class="bg-cta">
+  <a href={`tel:${site.phone.tel}`} class="container-site flex items-center justify-center gap-3 py-5 font-display text-xl font-extrabold tracking-wide text-white hover:underline sm:text-2xl">
+    <Phone size={24} aria-hidden="true" /> {p.call}
+  </a>
+</div>
+
+<!-- The 12 service write-ups in a desktop "window" -->
+<ServiceWindow title={p.ourServicesTitle} items={p.ourServices} />
+
+<!-- Why choose us: mixed-size tiles -->
+<section class="section" aria-labelledby="why-title">
+  <div class="container-site">
+    <p id="why-title" class="font-display text-3xl font-extrabold text-primary sm:text-4xl">{p.whyTitle}</p>
+    <div class="mt-10 gap-5 md:columns-2 lg:columns-3">
+      {
+        p.whyChoose.map((w, i) => {
+          const st = whyStyle[i % whyStyle.length];
+          const Icon = st.icon;
+          const isReviews = i === p.whyChoose.length - 1 && reviewsMatch;
+          return (
+            <article class:list={['relative isolate mb-5 break-inside-avoid overflow-hidden rounded-3xl p-7 sm:p-8', st.box]}>
+              {isReviews && (
+                <div class="mb-5 flex items-end gap-4">
+                  <span class="font-display text-6xl leading-none font-extrabold text-accent sm:text-7xl">{reviewsMatch![1]}+</span>
+                  <span class="pb-1.5">
+                    <span class="flex gap-0.5 text-accent" aria-hidden="true">
+                      {[0, 1, 2, 3, 4].map(() => (
+                        <Star size={18} fill="currentColor" />
+                      ))}
+                    </span>
+                    <span class="mt-1 block text-sm font-semibold text-white/70">5-star reviews</span>
+                  </span>
+                </div>
+              )}
+              <div class="flex items-center gap-3">
+                <span class:list={['grid size-11 shrink-0 place-items-center rounded-xl', st.chip]}>
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <h2 class:list={['text-xl font-extrabold sm:text-2xl', st.head]}>{w.title}</h2>
+              </div>
+              <div class:list={['mt-4 space-y-3 text-[15px] leading-relaxed', st.text, i === 0 || i === 5 ? '[&_a]:text-accent [&_strong]:text-white' : linkStyle]} set:html={w.html} />
+            </article>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Second "CALL US" + the laptop/Mac hardware callout -->
+<section class="section bg-primary-tint" aria-label="Laptop and Mac hardware problems">
+  <div class="container-site grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+    <a href={`tel:${site.phone.tel}`} class="group relative isolate flex flex-col justify-between overflow-hidden rounded-3xl bg-cta p-8 text-white sm:p-10">
+      <Phone size={180} stroke-width={1} class="pointer-events-none absolute -right-8 -bottom-10 -z-10 text-white/15" aria-hidden="true" />
+      <span class="font-display text-sm font-bold tracking-[0.14em] text-white/80 uppercase">{site.area}</span>
+      <span class="mt-10 font-display text-3xl leading-tight font-extrabold group-hover:underline sm:text-4xl">
+        {p.call.replace(/\s*\d.*$/, '')}<br />{p.call.match(/\d.*$/)?.[0]}
+      </span>
+    </a>
+    <div class="relative isolate overflow-hidden rounded-3xl bg-primary p-8 text-white sm:p-10">
+      <Laptop size={200} stroke-width={1} class="pointer-events-none absolute -right-10 -bottom-12 -z-10 text-white/[0.07]" aria-hidden="true" />
+      <h3 class="font-display text-xl font-extrabold tracking-wide text-accent sm:text-2xl">{p.hardware.title}</h3>
+      <ul class="mt-5 space-y-2.5" role="list">
+        {
+          p.hardware.problems.map((pr) => (
+            <li class="flex gap-3">
+              <Check size={18} stroke-width={3} class="mt-1 shrink-0 text-accent" aria-hidden="true" />
+              {pr}
+            </li>
+          ))
+        }
+      </ul>
+      <div class="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+        {p.hardware.quoteHref && <a href={p.hardware.quoteHref} class="btn-cta">{p.hardware.quoteLabel}</a>}
+        <p class="text-sm text-white/75">{p.hardware.note}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ (same answers and questions as the homepage) -->
+{
+  p.faq.length > 0 && (
+    <section class="section" aria-labelledby="faq-title">
+      <div class="container-site grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.6fr)]">
+        <div class="lg:sticky lg:top-28 lg:self-start">
+          <p id="faq-title" class="font-display text-3xl font-extrabold text-primary sm:text-4xl">Frequently Asked Questions</p>
+          <a href={site.quoteUrl} class="btn-cta mt-8">
+            <FileText size={18} aria-hidden="true" /> Get a Quote
+          </a>
+        </div>
+        <div class="divide-y divide-slate-200 border-y border-slate-200">
+          {p.faq.map((html, i) => (
+            <details name="nl-faq" class="group" open={i === 0}>
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-5 font-display text-lg font-bold text-ink transition-colors hover:text-primary [&::-webkit-details-marker]:hidden">
+                <span>{faqQuestions[i] ?? `Question ${i + 1}`}</span>
+                <span class="grid size-9 shrink-0 place-items-center rounded-full bg-primary-tint text-primary transition group-open:rotate-45 group-open:bg-primary group-open:text-white">
+                  <Plus size={18} aria-hidden="true" />
+                </span>
+              </summary>
+              <div class:list={['pr-12 pb-6 leading-relaxed text-slate-600', linkStyle]} set:html={html} />
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- Areas we serve -->
+{
+  p.areas.length > 0 && (
+    <section class="section bg-primary-tint" aria-labelledby="areas-title">
+      <div class="container-site">
+        <p id="areas-title" class="font-display text-3xl font-extrabold text-primary sm:text-4xl">{p.areasTitle}</p>
+        <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {p.areas.map((g) => (
+            <div class="rounded-2xl bg-white p-6 ring-1 ring-slate-200 sm:p-7">
+              <h3 class="flex items-center gap-2 text-lg font-bold">
+                <MapPin size={18} class="text-cta" aria-hidden="true" /> {g.title}
+              </h3>
+              <ul class="mt-4 flex flex-wrap gap-2">
+                {g.links.map((l) => (
+                  <li>
+                    <a
+                      href={l.href}
+                      class:list={[
+                        'block rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 transition hover:bg-primary hover:text-white hover:ring-primary',
+                        l.href === '/computer-repairs-north-lakes/' ? 'bg-accent text-ink ring-accent' : 'bg-primary-tint text-ink ring-slate-200',
+                      ]}
+                    >
+                      {l.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- Searchable directory of the 41 popular services -->
+<section class="section" aria-label="Our most popular services">
+  <div class="container-site">
+    <ServiceDirectory lead={p.servicesLead} services={p.services} />
+  </div>
+</section>
+
+<CtaBand title="Computer problems in North Lakes? Let’s get it sorted." />
