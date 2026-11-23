@@ -1,0 +1,41 @@
+---
+// src/layouts/BaseLayout.astro
+// Every page uses this. The header and footer go here once you design them.
+import Seo from '../components/Seo.astro';
+import '../styles/global.css';
+
+interface Props {
+  seo: Parameters<typeof Seo>[0]['data'];
+  type?: 'website' | 'article';
+}
+
+const { seo, type } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <Seo data={seo} type={type} />
+    <slot name="head" />
+  </head>
+  <body class="min-h-screen bg-white text-slate-800 antialiased">
+    <header class="border-b">
+      <!-- TODO: design the header (logo, menu, phone button, quote button) -->
+      <div class="mx-auto max-w-6xl px-4 py-4">
+        <a href="/" class="font-bold">PC Repairs North Lakes</a>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="border-t">
+      <!-- TODO: design the footer (services, brand links, contact) -->
+      <div class="mx-auto max-w-6xl px-4 py-8 text-sm">PC Repairs North Lakes</div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,42 @@
+---
+// src/pages/[...slug].astro
+// Builds EVERY exported page and post at its exact old WordPress URL.
+// Picks a template by page type: suburb page, blog post, or service/general page.
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SuburbTemplate from '../components/templates/SuburbTemplate.astro';
+import ServiceTemplate from '../components/templates/ServiceTemplate.astro';
+import PostTemplate from '../components/templates/PostTemplate.astro';
+
+export async function getStaticPaths() {
+  // These paths have their own files in src/pages/, so the catch-all skips them
+  const HANDLED_ELSEWHERE = new Set(['/', '/blog/']);
+
+  const pages = (await getCollection('pages')).map((entry) => ({ entry, kind: 'page' as const }));
+  const posts = (await getCollection('posts')).map((entry) => ({ entry, kind: 'post' as const }));
+
+  return [...pages, ...posts]
+    .filter(({ entry }) => !HANDLED_ELSEWHERE.has(entry.data.path))
+    .map(({ entry, kind }) => ({
+      // "/computer-repairs-chermside/" -> "computer-repairs-chermside"
+      params: { slug: entry.data.path.replace(/^\/|\/$/g, '') },
+      props: { entry, kind },
+    }));
+}
+
+const { entry, kind } = Astro.props;
+const { Content } = await render(entry);
+const isSuburb = kind === 'page' && entry.data.slug.startsWith('computer-repairs-');
+---
+
+<BaseLayout seo={entry.data} type={kind === 'post' ? 'article' : 'website'}>
+  {
+    kind === 'post' ? (
+      <PostTemplate data={entry.data}><Content /></PostTemplate>
+    ) : isSuburb ? (
+      <SuburbTemplate data={entry.data}><Content /></SuburbTemplate>
+    ) : (
+      <ServiceTemplate data={entry.data}><Content /></ServiceTemplate>
+    )
+  }
+</BaseLayout>

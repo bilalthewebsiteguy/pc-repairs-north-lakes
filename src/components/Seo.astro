@@ -1,0 +1,42 @@
+---
+// src/components/Seo.astro
+// Puts the SAME title / description / canonical / robots / OG tags the WordPress site had
+// into <head>. This is what protects rankings - change the design freely, not this.
+interface Props {
+  data: {
+    title: string;
+    path: string;
+    seoTitle?: string;
+    description?: string;
+    canonical?: string;
+    robots?: string;
+    ogTitle?: string;
+    ogDescription?: string;
+    ogImage?: string;
+  };
+  type?: 'website' | 'article';
+}
+
+const { data, type = 'website' } = Astro.props;
+const site = Astro.site ?? new URL('https://www.pcrepairsnorthlakes.com.au');
+
+const title = data.seoTitle || data.title;
+// Always point canonical at the live domain + the same path as before
+const canonical = data.canonical || new URL(data.path, site).href;
+const ogImage = data.ogImage ? new URL(data.ogImage, site).href : undefined;
+---
+
+<title>{title}</title>
+{data.description && <meta name="description" content={data.description} />}
+<link rel="canonical" href={canonical} />
+{data.robots && <meta name="robots" content={data.robots} />}
+
+<meta property="og:locale" content="en_AU" />
+<meta property="og:type" content={type} />
+<meta property="og:title" content={data.ogTitle || title} />
+{(data.ogDescription || data.description) && (
+  <meta property="og:description" content={data.ogDescription || data.description} />
+)}
+<meta property="og:url" content={canonical} />
+{ogImage && <meta property="og:image" content={ogImage} />}
+<meta name="twitter:card" content="summary_large_image" />

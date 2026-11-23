@@ -1,16 +1,20 @@
 ---
+// src/pages/index.astro
+// Homepage. SEO comes from src/content/pages/index.md (same title/description as WordPress).
+// The WordPress homepage sections were built in the theme, not stored as content,
+// so the homepage body is designed by hand here - copy the text from the live homepage word for word.
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const [home] = await getCollection('pages', (p) => p.data.path === '/');
+if (!home) throw new Error('No page with path "/" found in src/content/pages (should be index.md)');
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout seo={home.data}>
+  <!-- TODO: hero (H1 + phone button) -->
+  <section class="mx-auto max-w-6xl px-4 py-16">
+    <h1 class="text-4xl font-bold">Computer Repairs North Lakes</h1>
+  </section>
+
+  <!-- TODO: Our Services grid, brand logos, about, FAQ, reviews, quote callout -->
+</BaseLayout>
