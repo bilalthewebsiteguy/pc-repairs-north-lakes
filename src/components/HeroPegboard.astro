@@ -1,0 +1,248 @@
+---
+/**
+ * About page hero: a technician's pegboard tool wall drawn as a blueprint (screwdriver, spanner,
+ * pliers, magnifier, multimeter, cable), with the team's staff ID badges hanging from two hooks on
+ * gold lanyards, swaying gently. The badges ARE the WordPress team list (names and link unchanged).
+ * Robert's badge uses his real photo (public/images/robert.png); anyone without a photo gets their
+ * initials - never a made-up photo. No logos.
+ */
+import type { TeamMember } from '../lib/about';
+
+interface Props {
+  team: TeamMember[];
+  brand?: string; // "PC Repairs North Lakes" (WordPress heading), printed small on the badges
+}
+const { team, brand } = Astro.props;
+
+// Photos we actually have, by name
+const photos: Record<string, string> = { 'robert krajnyk': '/images/robert.png' };
+const photoFor = (name: string) => photos[name.toLowerCase()];
+
+// Hook positions across the board (%), one per badge (up to three)
+const spots = team.length === 1 ? [50] : team.length === 2 ? [31, 69] : [20, 50, 80];
+const holes = Array.from({ length: 19 }, (_, c) => Array.from({ length: 14 }, (_, r) => [30 + c * 28, 30 + r * 28])).flat();
+---
+
+<div class="hero-peg relative mx-auto aspect-[56/46] w-full">
+  <!-- the pegboard and its tools -->
+  <svg viewBox="0 0 560 460" class="absolute inset-0 h-full w-full" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <defs>
+      <radialGradient id="peg-glow" cx="50%" cy="45%" r="60%">
+        <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0.14"></stop>
+        <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+      </radialGradient>
+    </defs>
+    <rect x="6" y="6" width="548" height="420" rx="18" class="peg-board"></rect>
+    <rect x="6" y="6" width="548" height="420" rx="18" fill="url(#peg-glow)"></rect>
+    {holes.map(([x, y]) => <circle cx={x} cy={y} r="2.4" class="peg-hole" />)}
+
+    <!-- hooks for the badges -->
+    {
+      spots.slice(0, team.length).map((pct) => {
+        const x = (pct / 100) * 560;
+        return <path d={`M${x} 30 v10 q0 10 -9 10`} class="peg-hook" />;
+      })
+    }
+
+    <!-- screwdriver (left) -->
+    <g class="peg-tool peg-wiggle" style="transform-origin:46px 70px">
+      <path d="M40 74 h12 l2 6 v34 a4 4 0 0 1 -4 4 h-8 a4 4 0 0 1 -4 -4 v-34 z" class="peg-gold" />
+      <path d="M46 118 V214 M42 214 h8 l-4 12 z" class="peg-line" />
+      <path d="M41 88 h10 M41 96 h10 M41 104 h10" class="peg-dark" />
+    </g>
+    <!-- spanner -->
+    <g class="peg-tool">
+      <path d="M96 286 l70 -70" class="peg-line peg-thick" />
+      <circle cx="90" cy="292" r="13" class="peg-line" />
+      <path d="M166 216 l8 -14 a14 14 0 1 1 6 22 z" class="peg-line" />
+    </g>
+    <!-- magnifier with a moving glint -->
+    <g class="peg-tool">
+      <circle cx="94" cy="364" r="26" class="peg-line" />
+      <circle cx="94" cy="364" r="20" class="peg-lens" />
+      <path d="M112 382 l26 26" class="peg-gold-line" />
+      <path d="M82 352 a16 16 0 0 1 14 -6" class="peg-glint" />
+    </g>
+    <!-- pliers (right) -->
+    <g class="peg-tool">
+      <path d="M474 64 l-10 60 M498 64 l10 60" class="peg-line peg-thick" />
+      <path d="M464 124 q-6 40 -16 70 M508 124 q6 40 16 70" class="peg-gold-line peg-thick" />
+      <circle cx="486" cy="124" r="5" class="peg-gold" />
+    </g>
+    <!-- multimeter with a blinking display -->
+    <g class="peg-tool">
+      <rect x="452" y="236" width="72" height="110" rx="10" class="peg-line" />
+      <rect x="462" y="248" width="52" height="24" rx="3" class="peg-screen" />
+      <path d="M470 260 h8 M482 260 h8 M494 260 h8" class="peg-digits" />
+      <circle cx="488" cy="304" r="16" class="peg-line" />
+      <path d="M488 304 l9 -9" class="peg-gold-line peg-needle" style="transform-origin:488px 304px" />
+      <circle cx="468" cy="334" r="3" class="peg-gold" />
+      <circle cx="508" cy="334" r="3" class="peg-cta" />
+    </g>
+    <!-- cable coil -->
+    <g class="peg-tool">
+      <ellipse cx="372" cy="380" rx="34" ry="20" class="peg-line" />
+      <ellipse cx="372" cy="380" rx="24" ry="13" class="peg-line" />
+      <path d="M406 380 q20 0 26 24 q4 14 20 14 h14" class="peg-gold-line" />
+      <rect x="466" y="410" width="18" height="10" rx="2" class="peg-gold" />
+    </g>
+    <!-- shelf -->
+    <path d="M6 426 h548" class="peg-shelf"></path>
+  </svg>
+
+  <!-- staff badges on lanyards (the team list) -->
+  <ul class="absolute inset-0" role="list">
+    {
+      team.map((m, i) => {
+        const photo = photoFor(m.name);
+        const card = (
+          <span class="block overflow-hidden rounded-2xl bg-white text-center shadow-panel ring-1 ring-black/5">
+            <span class="relative block bg-primary px-2 pt-2.5 pb-2">
+              <span class="mx-auto block h-1.5 w-8 rounded-full bg-primary-deep" aria-hidden="true" />
+              {brand && <span class="mt-1.5 block font-display text-[8px] leading-tight font-bold tracking-[0.12em] text-white/80 uppercase sm:text-[10px]">{brand}</span>}
+            </span>
+            <span class="block px-2 pt-3 pb-3 sm:px-3 sm:pt-4">
+              {photo ? (
+                <img src={photo} alt={m.name} width="150" height="150" class="mx-auto size-14 rounded-full object-cover ring-4 ring-accent sm:size-20" />
+              ) : (
+                <span class="mx-auto grid size-14 place-items-center rounded-full bg-accent font-display text-lg font-extrabold text-ink ring-4 ring-accent-soft sm:size-20 sm:text-2xl" aria-hidden="true">
+                  {m.initials}
+                </span>
+              )}
+              <span class:list={['mt-2.5 block font-display text-[13px] leading-tight font-extrabold text-ink sm:text-base', m.href && 'group-hover:text-primary']}>{m.name}</span>
+              <span class="mx-auto mt-2.5 flex h-4 w-[70%] items-stretch justify-center gap-[2px]" aria-hidden="true">
+                {[2, 1, 3, 1, 2, 1, 1, 3, 2, 1, 3, 1, 2].map((w) => (
+                  <span class="bg-ink/70" style={`width:${w}px`} />
+                ))}
+              </span>
+            </span>
+          </span>
+        );
+        return (
+          <li class="peg-badge absolute top-[7%] w-[36%] max-w-[11.5rem]" style={`left:${spots[i]}%;--delay:${i * -1.7}s`}>
+            {/* lanyard: two gold straps from the hook to the clip */}
+            <svg viewBox="0 0 100 56" class="block w-full" fill="none" aria-hidden="true">
+              <path d="M50 0 L30 50 M50 0 L70 50" class="peg-strap" />
+              <rect x="40" y="46" width="20" height="10" rx="2" class="peg-clip" />
+            </svg>
+            {m.href ? (
+              <a href={m.href} class="group -mt-1 block transition hover:-translate-y-0.5">
+                {card}
+              </a>
+            ) : (
+              <div class="-mt-1">{card}</div>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
+
+<style>
+  .hero-peg .peg-board {
+    fill: color-mix(in oklab, var(--brand-primary), black 30%);
+    stroke: rgb(255 255 255 / 0.55);
+    stroke-width: 2;
+  }
+  .hero-peg .peg-hole {
+    fill: color-mix(in oklab, var(--brand-ink), black 15%);
+  }
+  .hero-peg .peg-hook {
+    stroke: rgb(255 255 255 / 0.85);
+    stroke-width: 3;
+  }
+  .hero-peg .peg-line {
+    stroke: rgb(255 255 255 / 0.8);
+    stroke-width: 2.2;
+  }
+  .hero-peg .peg-thick {
+    stroke-width: 6;
+  }
+  .hero-peg .peg-gold-line {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .hero-peg .peg-gold {
+    fill: var(--brand-accent);
+  }
+  .hero-peg .peg-cta {
+    fill: var(--brand-cta);
+  }
+  .hero-peg .peg-dark {
+    stroke: var(--brand-ink);
+    stroke-width: 2;
+  }
+  .hero-peg .peg-lens {
+    fill: color-mix(in oklab, var(--brand-accent), transparent 85%);
+  }
+  .hero-peg .peg-glint {
+    stroke: #fff;
+    stroke-width: 3;
+    animation: peg-glint 4s ease-in-out infinite;
+  }
+  .hero-peg .peg-screen {
+    fill: color-mix(in oklab, var(--brand-ink), black 20%);
+    stroke: var(--brand-accent);
+    stroke-width: 1.4;
+  }
+  .hero-peg .peg-digits {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+    animation: peg-blink 1.4s steps(2) infinite;
+  }
+  .hero-peg .peg-needle {
+    animation: peg-needle 3s ease-in-out infinite;
+  }
+  .hero-peg .peg-shelf {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+    opacity: 0.6;
+  }
+  .hero-peg .peg-wiggle {
+    animation: peg-wiggle 5s ease-in-out infinite;
+  }
+  .hero-peg .peg-strap {
+    stroke: var(--brand-accent);
+    stroke-width: 5;
+  }
+  .hero-peg .peg-clip {
+    fill: rgb(255 255 255 / 0.85);
+  }
+
+  /* badges hang from their hooks (centred on --left) and sway */
+  .peg-badge {
+    translate: -50% 0;
+    transform-origin: 50% 0;
+    animation: peg-sway 3.4s ease-in-out infinite;
+    animation-delay: var(--delay);
+  }
+  @keyframes peg-sway {
+    0%, 100% { rotate: -2.5deg; }
+    50% { rotate: 2.5deg; }
+  }
+  @keyframes peg-wiggle {
+    0%, 80%, 100% { rotate: 0deg; }
+    85% { rotate: 4deg; }
+    90% { rotate: -3deg; }
+    95% { rotate: 1.5deg; }
+  }
+  @keyframes peg-glint {
+    0%, 60%, 100% { opacity: 0.2; }
+    75% { opacity: 1; }
+  }
+  @keyframes peg-blink {
+    50% { opacity: 0.3; }
+  }
+  @keyframes peg-needle {
+    0%, 100% { rotate: -40deg; }
+    50% { rotate: 50deg; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .peg-badge,
+    .hero-peg * {
+      animation: none !important;
+    }
+  }
+</style>
