@@ -13,7 +13,7 @@ export const site = {
   // this site look normal but do nothing. Phone (tel:) and external links (quote form) still work.
   // Set pageLinksEnabled to true to switch every link back on - nothing else needs changing.
   pageLinksEnabled: false,
-  livePages: ['/', '/computer-repairs-north-lakes/', '/laptop-repair/'],
+  livePages: ['/', '/computer-repairs-north-lakes/', '/laptop-repair/', '/pc-services-2/'],
 
   businessName: 'PC Repairs North Lakes', // CONFIRM — site also uses "Zoo Computer Repairs" / "Fix It"
   logo: 'PC Repairs Northlakes', // same wording as the current logo image

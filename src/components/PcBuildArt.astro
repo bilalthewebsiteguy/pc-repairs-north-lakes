@@ -1,0 +1,133 @@
+---
+/**
+ * Small blueprint drawing for "New PC Setup": a CPU, a memory stick and a graphics card floating
+ * towards an empty tower along dashed paths. Gold and white lines on the dark panel; the parts
+ * bob gently and the paths flow towards the case. No text in the drawing.
+ */
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<svg viewBox="0 0 320 250" class:list={['pc-build', className]} fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <!-- tower -->
+  <path d="M186 34 L202 24 H284 L268 34 Z" class="b-top"></path>
+  <path d="M268 34 L284 24 V214 L268 226 Z" class="b-front"></path>
+  <rect x="186" y="34" width="82" height="192" rx="6" class="b-case"></rect>
+  <rect x="196" y="46" width="62" height="168" rx="3" class="b-glass"></rect>
+  <rect x="204" y="56" width="46" height="70" rx="2" class="b-slot"></rect>
+  <rect x="204" y="136" width="46" height="14" rx="2" class="b-slot"></rect>
+  <rect x="196" y="184" width="62" height="30" class="b-shroud"></rect>
+  <circle cx="276" cy="40" r="2.5" class="b-led"></circle>
+
+  <!-- dashed paths into the case -->
+  <path d="M92 62 C140 56 170 78 212 84" class="b-path"></path>
+  <path d="M104 128 C150 124 176 100 222 92" class="b-path"></path>
+  <path d="M120 186 C160 186 180 150 210 143" class="b-path"></path>
+  <circle cx="212" cy="84" r="3.5" class="b-dot"></circle>
+  <circle cx="222" cy="92" r="3.5" class="b-dot"></circle>
+  <circle cx="210" cy="143" r="3.5" class="b-dot"></circle>
+
+  <!-- CPU -->
+  <g class="b-part" style="--k:0s">
+    <rect x="44" y="40" width="44" height="44" rx="5" class="b-chip"></rect>
+    <rect x="56" y="52" width="20" height="20" rx="2" class="b-gold-fill"></rect>
+    <path d="M52 34 v6 M62 34 v6 M72 34 v6 M82 34 v6 M52 84 v6 M62 84 v6 M72 84 v6 M82 84 v6 M38 48 h6 M38 58 h6 M38 68 h6 M38 78 h6 M88 48 h6 M88 58 h6 M88 68 h6 M88 78 h6" class="b-pins"></path>
+  </g>
+  <!-- memory stick -->
+  <g class="b-part" style="--k:0.8s">
+    <rect x="22" y="118" width="82" height="20" rx="2.5" class="b-gold-fill"></rect>
+    <path d="M30 124 h10 v8 h-10 z M46 124 h10 v8 h-10 z M62 124 h10 v8 h-10 z M78 124 h10 v8 h-10 z" class="b-ram-chip"></path>
+    <path d="M26 138 v4 M34 138 v4 M42 138 v4 M50 138 v4 M58 138 v4 M66 138 v4 M74 138 v4 M82 138 v4 M90 138 v4 M98 138 v4" class="b-pins"></path>
+  </g>
+  <!-- graphics card -->
+  <g class="b-part" style="--k:1.6s">
+    <rect x="14" y="170" width="106" height="32" rx="4" class="b-chip"></rect>
+    <circle cx="44" cy="186" r="11" class="b-fan"></circle>
+    <circle cx="84" cy="186" r="11" class="b-fan"></circle>
+    <circle cx="44" cy="186" r="3" class="b-gold-fill"></circle>
+    <circle cx="84" cy="186" r="3" class="b-gold-fill"></circle>
+    <path d="M24 202 H96" class="b-edge"></path>
+  </g>
+</svg>
+
+<style>
+  .pc-build .b-case {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 22%);
+    stroke: rgb(255 255 255 / 0.75);
+    stroke-width: 1.8;
+  }
+  .pc-build .b-top {
+    fill: color-mix(in oklab, var(--brand-primary), black 10%);
+    stroke: rgb(255 255 255 / 0.6);
+    stroke-width: 1.4;
+  }
+  .pc-build .b-front {
+    fill: color-mix(in oklab, var(--brand-primary), black 38%);
+    stroke: rgb(255 255 255 / 0.6);
+    stroke-width: 1.4;
+  }
+  .pc-build .b-glass {
+    fill: color-mix(in oklab, var(--brand-ink), black 18%);
+    stroke: var(--brand-accent);
+    stroke-width: 1.6;
+  }
+  .pc-build .b-slot {
+    stroke: rgb(255 255 255 / 0.35);
+    stroke-width: 1.4;
+    stroke-dasharray: 4 4;
+  }
+  .pc-build .b-shroud {
+    fill: color-mix(in oklab, var(--brand-primary), black 30%);
+  }
+  .pc-build .b-led,
+  .pc-build .b-dot,
+  .pc-build .b-gold-fill {
+    fill: var(--brand-accent);
+  }
+  .pc-build .b-path {
+    stroke: var(--brand-accent);
+    stroke-width: 1.8;
+    stroke-dasharray: 5 6;
+    opacity: 0.8;
+    animation: b-flow 1.6s linear infinite;
+  }
+  .pc-build .b-chip {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 30%);
+    stroke: rgb(255 255 255 / 0.8);
+    stroke-width: 1.8;
+  }
+  .pc-build .b-pins {
+    stroke: rgb(255 255 255 / 0.6);
+    stroke-width: 1.6;
+  }
+  .pc-build .b-ram-chip {
+    fill: var(--brand-ink);
+  }
+  .pc-build .b-fan {
+    stroke: var(--brand-accent);
+    stroke-width: 1.6;
+  }
+  .pc-build .b-edge {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .pc-build .b-part {
+    animation: b-bob 4s ease-in-out infinite;
+    animation-delay: var(--k);
+  }
+  @keyframes b-flow {
+    to { stroke-dashoffset: -22; }
+  }
+  @keyframes b-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pc-build .b-path,
+    .pc-build .b-part {
+      animation: none;
+    }
+  }
+</style>

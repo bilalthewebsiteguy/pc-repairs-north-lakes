@@ -1,0 +1,537 @@
+---
+/**
+ * PC Services hero: a desktop tower seen through its glass side panel, drawn like an annotated
+ * blueprint. Six numbered callouts point at the parts behind each PC service; every ~4s one
+ * callout lights up and its part plays a short animation (pure CSS, 24s loop):
+ *   1 New PC Setup - RAM sticks drop in      2 PC Health Check - heartbeat trace
+ *   3 Software     - data downloads to SSD   4 Hardware - graphics card slides in
+ *   5 Virus        - bugs cleared by shield  6 PC Clean Up - dust blown out past the fans
+ * The numbered pills underneath use the WordPress section headings and link to the sections.
+ */
+interface Props {
+  items: { id: string; title: string }[]; // the six WordPress "# " headings, in page order
+}
+const { items } = Astro.props;
+
+// Callouts: marker position (mx,my) and the point on the drawing it points at (tx,ty)
+const callouts = [
+  { mx: 540, my: 64, tx: 382, ty: 92 }, // RAM
+  { mx: 64, my: 186, tx: 252, ty: 186 }, // heartbeat trace
+  { mx: 540, my: 330, tx: 414, ty: 304 }, // SSD
+  { mx: 64, my: 268, tx: 222, ty: 232 }, // graphics card
+  { mx: 64, my: 104, tx: 284, ty: 124 }, // CPU
+  { mx: 540, my: 196, tx: 424, ty: 186 }, // front fans
+];
+
+const fans = [
+  { cx: 204, cy: 104, r: 25 }, // rear exhaust
+  { cx: 308, cy: 124, r: 22 }, // CPU cooler
+  { cx: 408, cy: 98, r: 14 }, // front intakes
+  { cx: 408, cy: 142, r: 14 },
+  { cx: 408, cy: 186, r: 14 },
+];
+const ram = [346, 356, 366, 376];
+const bugs = [
+  [266, 104],
+  [352, 196],
+  [296, 192],
+];
+const dust = [
+  [396, 92], [418, 128], [400, 160], [420, 200], [392, 214], [184, 150],
+  [210, 300], [250, 304], [300, 296], [340, 300], [226, 140], [412, 116],
+];
+const vents = Array.from({ length: 12 }, (_, k) => 112 + k * 16);
+---
+
+<div class="hero-pc relative mx-auto w-full">
+  <svg viewBox="0 0 600 440" class="w-full overflow-visible" fill="none" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+    <defs>
+      <radialGradient id="pc-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0.3"></stop>
+        <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+      </radialGradient>
+      <radialGradient id="pc-inner" cx="55%" cy="40%" r="70%">
+        <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0.16"></stop>
+        <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+      </radialGradient>
+      <linearGradient id="pc-sheen" x1="0" x2="1">
+        <stop offset="0" stop-color="#fff" stop-opacity="0"></stop>
+        <stop offset="0.5" stop-color="#fff" stop-opacity="0.13"></stop>
+        <stop offset="1" stop-color="#fff" stop-opacity="0"></stop>
+      </linearGradient>
+      <clipPath id="pc-glass"><rect x="166" y="56" width="258" height="338" rx="6"></rect></clipPath>
+    </defs>
+
+    <ellipse cx="310" cy="420" rx="240" ry="18" fill="url(#pc-glow)"></ellipse>
+
+    <!-- case: top face, front face, side -->
+    <path d="M156 40 L184 22 H468 L440 40 Z" class="pc-face-top"></path>
+    <path d="M440 40 L468 22 V392 L440 410 Z" class="pc-face-front"></path>
+    {vents.map((y) => <path d={`M447 ${y} L461 ${y - 9}`} class="pc-vent" />)}
+    <circle cx="454" cy="58" r="4" class="pc-power"></circle>
+    <rect x="150" y="40" width="290" height="370" rx="10" class="pc-side"></rect>
+    <rect x="166" y="56" width="258" height="338" rx="6" class="pc-glass"></rect>
+    <!-- feet -->
+    <path d="M176 410 v8 h36 v-8 M378 410 v8 h36 v-8" class="pc-feet"></path>
+
+    <g clip-path="url(#pc-glass)">
+      <rect x="166" y="56" width="258" height="338" fill="url(#pc-inner)"></rect>
+
+      <!-- motherboard -->
+      <rect x="244" y="68" width="146" height="212" rx="4" class="pc-board"></rect>
+      <path d="M252 168 H280 M252 176 H274 M340 172 H384 M346 252 V272 M356 252 V272 M366 252 V272" class="pc-trace"></path>
+      <rect x="282" y="98" width="52" height="52" rx="4" class="pc-socket"></rect>
+      <rect x="350" y="252" width="30" height="20" rx="2" class="pc-chip"></rect>
+
+      <!-- heartbeat trace (PC Health Check) -->
+      <path d="M252 186 H290 L298 170 L306 202 L314 160 L322 194 L328 186 H384" class="pc-ecg-base"></path>
+      <path d="M252 186 H290 L298 170 L306 202 L314 160 L322 194 L328 186 H384" class="pc-ecg" pathLength="100" style="--d:4s"></path>
+
+      <!-- RAM sticks (New PC Setup) -->
+      {ram.map((x, k) => (
+        <g class="pc-ram" style={`--d:0s;--k:${k * 0.25}s`}>
+          <rect x={x} y="84" width="6" height="80" rx="1.5" class="pc-ram-stick" />
+          <path d={`M${x + 3} 96 V152`} class="pc-ram-chips" />
+        </g>
+      ))}
+
+      <!-- fans -->
+      {fans.map((f) => (
+        <g>
+          <rect x={f.cx - f.r - 3} y={f.cy - f.r - 3} width={(f.r + 3) * 2} height={(f.r + 3) * 2} rx="5" class="pc-fan-frame" />
+          <circle cx={f.cx} cy={f.cy} r={f.r} class="pc-fan-ring" />
+          <g class="pc-blades">
+            {[0, 72, 144, 216, 288].map((a) => (
+              <ellipse cx={f.cx} cy={f.cy - f.r * 0.5} rx={f.r * 0.2} ry={f.r * 0.42} transform={`rotate(${a} ${f.cx} ${f.cy})`} class="pc-blade" />
+            ))}
+          </g>
+          <circle cx={f.cx} cy={f.cy} r={f.r * 0.26} class="pc-hub" />
+        </g>
+      ))}
+
+      <!-- graphics card (Hardware Installation & Repair) -->
+      <g class="pc-gpu" style="--d:12s">
+        <rect x="220" y="206" width="7" height="46" rx="1.5" class="pc-bracket"></rect>
+        <rect x="226" y="212" width="176" height="34" rx="4" class="pc-gpu-body"></rect>
+        <circle cx="272" cy="229" r="12" class="pc-fan-ring"></circle>
+        <circle cx="330" cy="229" r="12" class="pc-fan-ring"></circle>
+        <circle cx="272" cy="229" r="3.5" class="pc-hub"></circle>
+        <circle cx="330" cy="229" r="3.5" class="pc-hub"></circle>
+        <path d="M356 222 H392 M356 229 H392 M356 236 H392" class="pc-trace"></path>
+        <path d="M240 246 H330" class="pc-gold-edge"></path>
+      </g>
+
+      <!-- cables -->
+      <path d="M318 318 C318 300 300 292 300 280 M396 318 C396 300 386 288 386 280" class="pc-cable"></path>
+
+      <!-- power supply shroud + SSD (Software Installation & Repair) -->
+      <rect x="166" y="318" width="258" height="76" class="pc-shroud"></rect>
+      <path d="M186 344 H262 M186 354 H262 M186 364 H262" class="pc-vent"></path>
+      <rect x="358" y="294" width="56" height="20" rx="3" class="pc-ssd"></rect>
+      <rect x="363" y="299" width="36" height="10" rx="1.5" class="pc-ssd-track"></rect>
+      <rect x="363" y="299" width="36" height="10" rx="1.5" class="pc-ssd-bar" style="--d:8s"></rect>
+      <circle cx="406" cy="304" r="2.5" class="pc-ssd-led" style="--d:8s"></circle>
+      <g class="pc-dl" style="--d:8s">
+        <path d="M386 254 V280 M376 270 L386 280 L396 270" class="pc-dl-arrow"></path>
+      </g>
+
+      <!-- Virus Removal & Protection: bugs, then a shield over the CPU -->
+      {bugs.map(([x, y], b) => (
+        <g class="pc-bug" style={`--d:16s;--k:${b * 0.3}s`}>
+          <ellipse cx={x} cy={y} rx="7" ry="9" class="pc-bug-body" />
+          <path d={`M${x - 7} ${y - 3} l-6 -4 M${x - 7} ${y + 3} l-6 3 M${x + 7} ${y - 3} l6 -4 M${x + 7} ${y + 3} l6 3 M${x - 3} ${y - 9} l-3 -5 M${x + 3} ${y - 9} l3 -5`} class="pc-bug-legs" />
+        </g>
+      ))}
+      <g class="pc-shield" style="--d:16s">
+        <path d="M308 94 L334 104 V124 C334 140 322 150 308 156 C294 150 282 140 282 124 V104 Z" class="pc-shield-body"></path>
+        <path d="M297 124 l8 8 l15 -16" class="pc-shield-tick"></path>
+      </g>
+
+      <!-- PC Clean Up: dust blown out, air flow past the front fans -->
+      {dust.map(([x, y], i) => (
+        <circle cx={x} cy={y} r={i % 3 === 0 ? 3.4 : 2.4} class="pc-dust" style={`--d:20s;--k:${(i % 4) * 0.15}s`} />
+      ))}
+      <g class="pc-wind" style="--d:20s">
+        <path d="M392 120 C370 116 356 124 336 120 M392 164 C366 160 348 170 320 164 M392 206 C372 204 360 210 344 206" class="pc-wind-line"></path>
+      </g>
+
+      <!-- glass reflection -->
+      <rect x="60" y="40" width="70" height="380" class="pc-sheen" fill="url(#pc-sheen)" transform="skewX(-14)"></rect>
+    </g>
+
+    <!-- numbered callouts -->
+    {callouts.map((c, i) => (
+      <g class="pc-callout" style={`--d:${i * 4}s`}>
+        <path d={`M${c.mx} ${c.my} L${c.tx} ${c.ty}`} class="pc-lead" />
+        <path d={`M${c.mx} ${c.my} L${c.tx} ${c.ty}`} class="pc-lead-on" />
+        <circle cx={c.tx} cy={c.ty} r="3.5" class="pc-dot" />
+        <circle cx={c.mx} cy={c.my} r="16" class="pc-mark" />
+        <circle cx={c.mx} cy={c.my} r="16" class="pc-mark-on" />
+        <text x={c.mx} y={c.my + 5} text-anchor="middle" class="pc-num">{i + 1}</text>
+        <path d={`M${c.mx - 7} ${c.my} l5 5 l9 -10`} class="pc-tick" />
+      </g>
+    ))}
+  </svg>
+
+  <!-- numbered pills, lit in sync with the drawing -->
+  <ol class="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2" role="list">
+    {
+      items.slice(0, 6).map((s, i) => (
+        <li>
+          <a href={`#${s.id}`} class="pc-pill flex items-center gap-2.5 rounded-full py-1.5 pr-4 pl-1.5 font-display text-xs font-bold ring-1 ring-white/20 sm:text-[13px]" style={`--d:${i * 4}s`}>
+            <span class="pc-pill-num grid size-6 shrink-0 place-items-center rounded-full bg-white/10 text-[11px]">{i + 1}</span>
+            {s.title}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .hero-pc {
+    --cycle: 24s;
+  }
+  /* ---- case ---- */
+  .hero-pc .pc-side {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 22%);
+    stroke: rgb(255 255 255 / 0.75);
+    stroke-width: 2;
+  }
+  .hero-pc .pc-face-top {
+    fill: color-mix(in oklab, var(--brand-primary), black 10%);
+    stroke: rgb(255 255 255 / 0.6);
+    stroke-width: 1.6;
+  }
+  .hero-pc .pc-face-front {
+    fill: color-mix(in oklab, var(--brand-primary), black 38%);
+    stroke: rgb(255 255 255 / 0.6);
+    stroke-width: 1.6;
+  }
+  .hero-pc .pc-glass {
+    fill: color-mix(in oklab, var(--brand-ink), black 18%);
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+  }
+  .hero-pc .pc-vent {
+    stroke: rgb(255 255 255 / 0.25);
+    stroke-width: 2;
+  }
+  .hero-pc .pc-feet {
+    stroke: rgb(255 255 255 / 0.5);
+    stroke-width: 2;
+  }
+  .hero-pc .pc-power {
+    fill: var(--brand-accent);
+    animation: pc-power 2.4s ease-in-out infinite;
+  }
+  @keyframes pc-power {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  /* ---- inside ---- */
+  .hero-pc .pc-board {
+    fill: color-mix(in oklab, var(--brand-primary), black 42%);
+    stroke: rgb(255 255 255 / 0.35);
+    stroke-width: 1.4;
+  }
+  .hero-pc .pc-trace {
+    stroke: color-mix(in oklab, var(--brand-accent), transparent 55%);
+    stroke-width: 1.4;
+  }
+  .hero-pc .pc-socket,
+  .hero-pc .pc-chip {
+    fill: color-mix(in oklab, var(--brand-ink), black 10%);
+    stroke: rgb(255 255 255 / 0.4);
+    stroke-width: 1.4;
+  }
+  .hero-pc .pc-fan-frame {
+    fill: color-mix(in oklab, var(--brand-ink), black 5%);
+    stroke: rgb(255 255 255 / 0.45);
+    stroke-width: 1.4;
+  }
+  .hero-pc .pc-fan-ring {
+    stroke: var(--brand-accent);
+    stroke-width: 1.6;
+  }
+  .hero-pc .pc-blade {
+    fill: rgb(255 255 255 / 0.2);
+    stroke: rgb(255 255 255 / 0.55);
+    stroke-width: 1;
+  }
+  .hero-pc .pc-hub {
+    fill: var(--brand-accent);
+  }
+  .hero-pc .pc-blades {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pc-spin 2.6s linear infinite;
+  }
+  @keyframes pc-spin {
+    to { transform: rotate(360deg); }
+  }
+  .hero-pc .pc-ram-stick {
+    fill: var(--brand-accent);
+  }
+  .hero-pc .pc-ram-chips {
+    stroke: var(--brand-ink);
+    stroke-width: 2.5;
+    stroke-dasharray: 6 5;
+  }
+  .hero-pc .pc-bracket {
+    fill: rgb(255 255 255 / 0.55);
+  }
+  .hero-pc .pc-gpu-body {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 30%);
+    stroke: rgb(255 255 255 / 0.7);
+    stroke-width: 1.6;
+  }
+  .hero-pc .pc-gold-edge {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .hero-pc .pc-cable {
+    stroke: rgb(255 255 255 / 0.22);
+    stroke-width: 4;
+  }
+  .hero-pc .pc-shroud {
+    fill: color-mix(in oklab, var(--brand-primary), black 30%);
+    stroke: rgb(255 255 255 / 0.35);
+    stroke-width: 1.4;
+  }
+  .hero-pc .pc-ssd {
+    fill: color-mix(in oklab, var(--brand-ink), black 10%);
+    stroke: rgb(255 255 255 / 0.7);
+    stroke-width: 1.6;
+  }
+  .hero-pc .pc-ssd-track {
+    fill: rgb(255 255 255 / 0.1);
+  }
+  .hero-pc .pc-ssd-bar {
+    fill: var(--brand-accent);
+    transform-box: fill-box;
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+  .hero-pc .pc-ssd-led {
+    fill: var(--brand-accent);
+    opacity: 0.35;
+  }
+  .hero-pc .pc-dl {
+    opacity: 0;
+  }
+  .hero-pc .pc-dl-arrow {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .hero-pc .pc-ecg-base {
+    stroke: rgb(255 255 255 / 0.12);
+    stroke-width: 2;
+  }
+  .hero-pc .pc-ecg {
+    stroke: var(--brand-accent);
+    stroke-width: 2.6;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+  }
+  .hero-pc .pc-bug {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .hero-pc .pc-bug-body {
+    fill: var(--brand-cta);
+  }
+  .hero-pc .pc-bug-legs {
+    stroke: var(--brand-cta);
+    stroke-width: 1.8;
+  }
+  .hero-pc .pc-shield {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .hero-pc .pc-shield-body {
+    fill: var(--brand-accent);
+    stroke: #fff;
+    stroke-width: 2;
+  }
+  .hero-pc .pc-shield-tick {
+    stroke: var(--brand-ink);
+    stroke-width: 4;
+  }
+  .hero-pc .pc-dust {
+    fill: rgb(255 255 255 / 0.9);
+    opacity: 0;
+  }
+  .hero-pc .pc-wind {
+    opacity: 0;
+  }
+  .hero-pc .pc-wind-line {
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+    stroke-dasharray: 10 8;
+  }
+  .hero-pc .pc-sheen {
+    animation: pc-sheen 8s ease-in-out infinite;
+  }
+  @keyframes pc-sheen {
+    0%, 60% { transform: skewX(-14deg) translateX(0); }
+    100% { transform: skewX(-14deg) translateX(520px); }
+  }
+
+  /* ---- callouts ---- */
+  .hero-pc .pc-lead {
+    stroke: rgb(255 255 255 / 0.4);
+    stroke-width: 1.4;
+    stroke-dasharray: 4 5;
+  }
+  .hero-pc .pc-lead-on {
+    stroke: var(--brand-accent);
+    stroke-width: 2.2;
+    opacity: 0;
+  }
+  .hero-pc .pc-dot {
+    fill: var(--brand-accent);
+  }
+  .hero-pc .pc-mark {
+    fill: var(--brand-primary);
+    stroke: rgb(255 255 255 / 0.7);
+    stroke-width: 1.8;
+  }
+  .hero-pc .pc-mark-on {
+    fill: var(--brand-accent);
+    opacity: 0;
+  }
+  .hero-pc .pc-num {
+    font-family: 'Montserrat Variable', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    fill: #fff;
+  }
+  .hero-pc .pc-tick {
+    stroke: var(--brand-ink);
+    stroke-width: 3.2;
+    opacity: 0;
+  }
+
+  /* ---- the story: every step runs on the same 24s clock, offset by --d (one step = 1/6) ---- */
+  .hero-pc :is(.pc-callout *, .pc-pill, .pc-pill-num, .pc-ram, .pc-ecg, .pc-ssd-bar, .pc-ssd-led, .pc-dl, .pc-gpu, .pc-bug, .pc-shield, .pc-dust, .pc-wind) {
+    animation-duration: var(--cycle);
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+    animation-timing-function: ease-in-out;
+    animation-delay: calc(var(--d) + var(--k, 0s));
+  }
+  .hero-pc .pc-callout .pc-mark-on,
+  .hero-pc .pc-callout .pc-lead-on { animation-name: pc-on; }
+  .hero-pc .pc-callout .pc-num { animation-name: pc-num; }
+  .hero-pc .pc-callout .pc-tick { animation-name: pc-tick; }
+  .hero-pc .pc-ram { animation-name: pc-ram; }
+  .hero-pc .pc-ecg { animation-name: pc-ecg; }
+  .hero-pc .pc-ssd-bar { animation-name: pc-bar; }
+  .hero-pc .pc-ssd-led { animation-name: pc-led; }
+  .hero-pc .pc-dl { animation-name: pc-dl; }
+  .hero-pc .pc-gpu { animation-name: pc-gpu; }
+  .hero-pc .pc-bug { animation-name: pc-bug; }
+  .hero-pc .pc-shield { animation-name: pc-shield; }
+  .hero-pc .pc-dust { animation-name: pc-dust; }
+  .hero-pc .pc-wind { animation-name: pc-wind; }
+  .hero-pc .pc-pill { animation-name: pc-pill; }
+  .hero-pc .pc-pill-num { animation-name: pc-pill-num; }
+
+  @keyframes pc-on {
+    0% { opacity: 0; }
+    1.5%, 15% { opacity: 1; }
+    16.5%, 100% { opacity: 0; }
+  }
+  @keyframes pc-num {
+    0% { fill: #fff; opacity: 1; }
+    1.5%, 10% { fill: var(--brand-ink); opacity: 1; }
+    11%, 15.5% { fill: var(--brand-ink); opacity: 0; }
+    16.5%, 100% { fill: #fff; opacity: 1; }
+  }
+  @keyframes pc-tick {
+    0%, 10.5% { opacity: 0; }
+    11.5%, 15% { opacity: 1; }
+    16%, 100% { opacity: 0; }
+  }
+  /* parts start in place (so the drawing is complete before its step), jump out, then fit back in */
+  @keyframes pc-ram {
+    0% { transform: none; opacity: 1; }
+    0.6% { transform: translateY(-70px); opacity: 0; }
+    7%, 100% { transform: none; opacity: 1; }
+  }
+  @keyframes pc-gpu {
+    0% { transform: none; opacity: 1; }
+    0.6% { transform: translateX(-90px); opacity: 0; }
+    8%, 100% { transform: none; opacity: 1; }
+  }
+  @keyframes pc-ecg {
+    0% { stroke-dashoffset: 100; opacity: 1; }
+    10% { stroke-dashoffset: 0; opacity: 1; }
+    14% { stroke-dashoffset: 0; opacity: 1; }
+    16.5%, 100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+  @keyframes pc-bar {
+    0%, 1% { transform: scaleX(0); }
+    11%, 15% { transform: scaleX(1); }
+    16.5%, 100% { transform: scaleX(0); }
+  }
+  @keyframes pc-led {
+    0%, 1% { opacity: 0.35; }
+    2%, 4%, 6%, 8%, 10% { opacity: 1; }
+    3%, 5%, 7%, 9% { opacity: 0.3; }
+    11%, 15% { opacity: 1; }
+    16.5%, 100% { opacity: 0.35; }
+  }
+  @keyframes pc-dl {
+    0% { opacity: 0; transform: translateY(-10px); }
+    2% { opacity: 1; transform: translateY(-10px); }
+    10% { opacity: 1; transform: translateY(4px); }
+    12%, 100% { opacity: 0; transform: translateY(4px); }
+  }
+  @keyframes pc-bug {
+    0% { opacity: 0; transform: scale(0.4); }
+    2%, 7% { opacity: 1; transform: scale(1); }
+    10%, 100% { opacity: 0; transform: scale(0.3); }
+  }
+  @keyframes pc-shield {
+    0%, 6% { opacity: 0; transform: scale(0.5); }
+    9% { opacity: 1; transform: scale(1.1); }
+    11%, 14.5% { opacity: 1; transform: scale(1); }
+    16.5%, 100% { opacity: 0; transform: scale(1); }
+  }
+  @keyframes pc-dust {
+    0% { opacity: 0; transform: translate(0, 0); }
+    1.5%, 4% { opacity: 1; transform: translate(0, 0); }
+    13%, 100% { opacity: 0; transform: translate(-46px, -16px); }
+  }
+  @keyframes pc-wind {
+    0% { opacity: 0; transform: translateX(10px); }
+    3%, 12% { opacity: 1; }
+    15%, 100% { opacity: 0; transform: translateX(-24px); }
+  }
+  @keyframes pc-pill {
+    0% { background: transparent; color: #fff; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.2); }
+    1.5%, 15% { background: var(--brand-accent); color: var(--brand-ink); box-shadow: 0 0 0 1px var(--brand-accent); }
+    16.5%, 100% { background: transparent; color: #fff; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.2); }
+  }
+  @keyframes pc-pill-num {
+    0% { background: rgb(255 255 255 / 0.1); color: #fff; }
+    1.5%, 15% { background: var(--brand-ink); color: var(--brand-accent); }
+    16.5%, 100% { background: rgb(255 255 255 / 0.1); color: #fff; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-pc *,
+    .hero-pc .pc-pill,
+    .hero-pc .pc-pill-num {
+      animation: none !important;
+    }
+    /* still picture: complete tower, no bugs/dust/arrows */
+    .hero-pc .pc-ecg { stroke-dashoffset: 0; }
+    .hero-pc .pc-ssd-bar { transform: scaleX(0.7); }
+  }
+</style>

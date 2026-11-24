@@ -1,0 +1,442 @@
+---
+// PC Services page (/pc-services-2/). Same words as WordPress (split by src/lib/pcservices.ts),
+// laid out as: tower hero, intro + side card, then one band per service (01-06, each with its own
+// layout; 04 Hardware is the dark interactive "parts tray"), the areas we serve and the call band.
+import Activity from '@lucide/astro/icons/activity';
+import AppWindow from '@lucide/astro/icons/app-window';
+import Briefcase from '@lucide/astro/icons/briefcase';
+import Bug from '@lucide/astro/icons/bug';
+import CalendarCheck from '@lucide/astro/icons/calendar-check';
+import Check from '@lucide/astro/icons/check';
+import Fan from '@lucide/astro/icons/fan';
+import Film from '@lucide/astro/icons/film';
+import FileText from '@lucide/astro/icons/file-text';
+import Gamepad2 from '@lucide/astro/icons/gamepad-2';
+import Globe from '@lucide/astro/icons/globe';
+import Headphones from '@lucide/astro/icons/headphones';
+import HeartPulse from '@lucide/astro/icons/heart-pulse';
+import House from '@lucide/astro/icons/house';
+import MapPin from '@lucide/astro/icons/map-pin';
+import Monitor from '@lucide/astro/icons/monitor';
+import Phone from '@lucide/astro/icons/phone';
+import ScanSearch from '@lucide/astro/icons/scan-search';
+import ShieldCheck from '@lucide/astro/icons/shield-check';
+import Sparkles from '@lucide/astro/icons/sparkles';
+import Wind from '@lucide/astro/icons/wind';
+import Wrench from '@lucide/astro/icons/wrench';
+import CtaBand from '../CtaBand.astro';
+import HeroPcTower from '../HeroPcTower.astro';
+import PcBuildArt from '../PcBuildArt.astro';
+import PcPartsTray from '../PcPartsTray.astro';
+import SideCallCard from '../SideCallCard.astro';
+import { site } from '../../config/site';
+import { pcServicesSections, type PcSection } from '../../lib/pcservices';
+
+interface Props {
+  heading: string; // the page's single H1 (same words as the WordPress page)
+  body: string; // raw exported markdown of the page
+}
+const { heading, body } = Astro.props;
+const p = await pcServicesSections(body);
+
+// Quick facts for the hero, quoted word for word from the page text (dropped if not found)
+const facts = ['Any kind of PC setup', 'PC Health Check for any brand of computer', 'both software and hardware clean up'].filter((f) =>
+  p.allText.includes(f),
+);
+
+// "<p>a</p><p>b</p>" -> ["<p>a</p>", "<p>b</p>"]
+const paras = (html: string) => html.match(/<p>[\s\S]*?<\/p>/g) ?? (html ? [html] : []);
+const all = (s: PcSection) => paras(s.leadHtml + s.restHtml);
+const num = (s: PcSection) => String(p.sections.indexOf(s) + 1).padStart(2, '0');
+const byId = (id: string) => p.sections.find((s) => s.id === id);
+
+const setup = byId('new-pc-setup');
+const health = byId('pc-health-check');
+const software = byId('software-installation--repair');
+const hardware = byId('hardware-installation--repair');
+const virus = byId('virus-removal--protection');
+const clean = byId('pc-clean-up');
+// Anything WordPress has that isn't one of the six above still gets shown (simple card)
+const known = [setup, health, software, hardware, virus, clean];
+const others = p.sections.filter((s) => !known.includes(s));
+
+const introParas = paras(p.introHtml);
+
+const iconFor: Record<string, typeof Monitor> = {
+  'new-pc-setup': Monitor,
+  'pc-health-check': HeartPulse,
+  'software-installation--repair': AppWindow,
+  'hardware-installation--repair': Wrench,
+  'virus-removal--protection': ShieldCheck,
+  'pc-clean-up': Sparkles,
+};
+const tones = ['bg-primary text-white', 'bg-accent text-ink', 'bg-cta text-white'];
+
+const linkStyle =
+  '[&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:decoration-accent [&_a]:decoration-2 [&_a]:underline-offset-4 [&_strong]:text-ink';
+const h2 = 'text-3xl font-extrabold text-primary sm:text-4xl';
+---
+
+<!-- Hero: blueprint grid + a PC tower with numbered callouts for the six services -->
+<section class="relative isolate overflow-hidden bg-primary text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.09] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px] [mask-image:linear-gradient(to_right,transparent,black_45%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="pointer-events-none absolute -bottom-48 -left-40 -z-10 size-[34rem] rounded-full bg-white/[0.05] blur-3xl" aria-hidden="true"></div>
+  <div class="container-site grid grid-cols-1 items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 lg:py-16">
+    <div>
+      <!-- heading + facts sit a little higher on desktop; the buttons stay where they are -->
+      <div class="lg:-translate-y-10">
+        <h1 class="font-display text-[2.5rem] leading-[1.02] font-extrabold tracking-[-0.02em] text-white sm:text-6xl xl:text-[4.1rem]">
+          {heading}
+        </h1>
+        <p class="mt-6 max-w-xl text-xl text-white/85">Servicing {site.area}</p>
+        {
+          facts.length > 0 && (
+            <ul class="mt-7 space-y-2.5" role="list">
+              {facts.map((f) => (
+                <li class="flex items-center gap-3 text-lg text-white/90">
+                  <span class="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-ink">
+                    <Check size={14} stroke-width={3.5} aria-hidden="true" />
+                  </span>
+                  <span class="first-letter:uppercase">{f}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6 text-base sm:text-lg">
+          <Phone size={19} aria-hidden="true" /> Call {site.phone.display}
+        </a>
+        <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6 text-base sm:text-lg">
+          <FileText size={18} aria-hidden="true" /> Get a Quote
+        </a>
+      </div>
+    </div>
+    <div class="mx-auto w-full max-w-[560px] lg:max-w-none">
+      <HeroPcTower items={p.sections} />
+    </div>
+  </div>
+</section>
+
+<!-- Intro: first paragraph as a statement, second paragraph, then a map of the six services -->
+<section class="section">
+  <div class="container-site grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <div class="min-w-0">
+      <div class="relative pl-6">
+        <span class="absolute top-1 bottom-1 left-0 w-1.5 rounded-full bg-accent" aria-hidden="true"></span>
+        <div class:list={['font-display text-lg leading-snug font-bold text-ink sm:text-[1.4rem] sm:leading-snug', linkStyle]} set:html={introParas[0] ?? ''} />
+      </div>
+      <div class:list={['mt-6 space-y-4 text-lg leading-relaxed text-slate-600', linkStyle]} set:html={introParas.slice(1).join('')} />
+
+      <ul class="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" role="list">
+        {
+          p.sections.map((s, i) => {
+            const Icon = iconFor[s.id] ?? Wrench;
+            return (
+              <li>
+                <a href={`#${s.id}`} class="group relative flex h-full items-center gap-3.5 overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift hover:ring-primary/30">
+                  <span class:list={['grid size-11 shrink-0 place-items-center rounded-xl', tones[i % 3]]}>
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
+                  <span class="min-w-0">
+                    <span class="block font-display text-xs font-extrabold text-slate-400">{String(i + 1).padStart(2, '0')}</span>
+                    <span class="block font-display text-[15px] leading-snug font-extrabold text-ink group-hover:text-primary">{s.title}</span>
+                  </span>
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+    <div>
+      <SideCallCard heading="Talk to a local technician" />
+    </div>
+  </div>
+</section>
+
+<!-- 01 New PC Setup: text + "build" drawing; the paragraph about house / gaming / business PCs gets icon chips -->
+{
+  setup && (
+    <section id={setup.id} class="section scroll-mt-28 bg-primary-tint" aria-labelledby={`${setup.id}-title`}>
+      <div class="container-site grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
+        <div class="min-w-0">
+          <span class="inline-flex rounded-full bg-primary px-3 py-1 font-display text-sm font-extrabold text-white">{num(setup)}</span>
+          <h2 id={`${setup.id}-title`} class:list={['mt-4', h2]}>{setup.title}</h2>
+          <span class="mt-4 block h-1 w-14 rounded-full bg-accent" aria-hidden="true" />
+          {all(setup).map((para, i) =>
+            i === 1 ? (
+              <div class="relative mt-6 rounded-2xl bg-white p-6 shadow-soft ring-1 ring-slate-200">
+                <span class="absolute top-6 bottom-6 left-0 w-1 rounded-r-full bg-accent" aria-hidden="true" />
+                <div class="mb-4 flex gap-2" aria-hidden="true">
+                  <span class="grid size-9 place-items-center rounded-lg bg-primary text-white"><House size={17} /></span>
+                  <span class="grid size-9 place-items-center rounded-lg bg-accent text-ink"><Gamepad2 size={17} /></span>
+                  <span class="grid size-9 place-items-center rounded-lg bg-cta text-white"><Briefcase size={17} /></span>
+                </div>
+                <div class:list={['leading-relaxed text-slate-700', linkStyle]} set:html={para} />
+              </div>
+            ) : (
+              <div class:list={['mt-6 text-lg leading-relaxed text-slate-600', linkStyle]} set:html={para} />
+            ),
+          )}
+        </div>
+        <div class="relative isolate overflow-hidden rounded-3xl bg-ink p-6 shadow-panel sm:p-8">
+          <div class="pointer-events-none absolute inset-0 -z-10 opacity-[0.08] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:22px_22px]" aria-hidden="true" />
+          <Monitor size={150} class="pointer-events-none absolute -right-8 -bottom-8 -z-10 text-white/[0.05]" aria-hidden="true" />
+          <PcBuildArt class="mx-auto w-full max-w-[380px]" />
+          <a href={`tel:${site.phone.tel}`} class="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white/80 hover:text-accent">
+            <Phone size={15} aria-hidden="true" /> {site.phone.display}
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- 02 PC Health Check: heartbeat line by the heading, the three paragraphs as mixed tiles -->
+{
+  health && (
+    <section id={health.id} class="section scroll-mt-28" aria-labelledby={`${health.id}-title`}>
+      <div class="container-site">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:gap-10">
+          <div class="shrink-0">
+            <span class="inline-flex rounded-full bg-accent px-3 py-1 font-display text-sm font-extrabold text-ink">{num(health)}</span>
+            <h2 id={`${health.id}-title`} class:list={['mt-4', h2]}>{health.title}</h2>
+          </div>
+          <svg viewBox="0 0 400 48" preserveAspectRatio="none" class="health-ecg h-12 w-full min-w-0 flex-1 lg:mb-1" fill="none" aria-hidden="true">
+            <path d="M0 24 H150 L162 24 L172 6 L184 42 L196 2 L208 34 L216 24 H400" class="ecg-base" />
+            <path d="M0 24 H150 L162 24 L172 6 L184 42 L196 2 L208 34 L216 24 H400" class="ecg-run" pathLength="100" />
+          </svg>
+        </div>
+        <div class="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
+          {all(health).map((para, i) => {
+            const look = [
+              { box: 'bg-primary text-white', chip: 'bg-accent text-ink', text: 'text-white/90', Icon: Activity },
+              { box: 'bg-white ring-1 ring-slate-200', chip: 'bg-primary text-white', text: 'text-slate-600', Icon: ScanSearch },
+              { box: 'bg-accent-soft/60', chip: 'bg-cta text-white', text: 'text-slate-700', Icon: CalendarCheck },
+            ][i % 3];
+            return (
+              <div class:list={['relative isolate overflow-hidden rounded-3xl p-7 transition hover:-translate-y-0.5 hover:shadow-lift', look.box, i === 1 && 'lg:mt-8']}>
+                <look.Icon size={120} class:list={['pointer-events-none absolute -right-6 -bottom-6 -z-10', i === 0 ? 'text-white/[0.07]' : 'text-ink/[0.05]']} aria-hidden="true" />
+                <span class:list={['grid size-12 place-items-center rounded-xl', look.chip]}>
+                  <look.Icon size={22} aria-hidden="true" />
+                </span>
+                <div class:list={['mt-5 leading-relaxed', look.text, linkStyle]} set:html={para} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- 03 Software Installation & Repair: the text in an "app window", next to a dock of app icons -->
+{
+  software && (
+    <section id={software.id} class="section scroll-mt-28 bg-primary-tint" aria-labelledby={`${software.id}-title`}>
+      <div class="container-site grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:gap-14">
+        <div class="overflow-hidden rounded-3xl bg-white shadow-panel ring-1 ring-slate-200">
+          <div class="flex items-center gap-2 bg-ink px-5 py-3.5" aria-hidden="true">
+            <span class="size-3 rounded-full bg-cta" />
+            <span class="size-3 rounded-full bg-accent" />
+            <span class="size-3 rounded-full bg-white/40" />
+            <span class="ml-3 h-2 w-32 rounded-full bg-white/15" />
+          </div>
+          <div class="p-6 sm:p-9">
+            <span class="inline-flex rounded-full bg-cta px-3 py-1 font-display text-sm font-extrabold text-white">{num(software)}</span>
+            <h2 id={`${software.id}-title`} class:list={['mt-4', h2]}>{software.title}</h2>
+            <span class="mt-4 block h-1 w-14 rounded-full bg-accent" aria-hidden="true" />
+            <div class:list={['mt-6 space-y-4 text-lg leading-relaxed text-slate-600 [&>p:last-child]:rounded-2xl [&>p:last-child]:bg-primary-tint [&>p:last-child]:p-5 [&>p:last-child]:text-base [&>p:last-child]:text-slate-700', linkStyle]} set:html={software.leadHtml + software.restHtml} />
+          </div>
+        </div>
+        <div class="relative mx-auto grid w-full max-w-[16rem] grid-cols-3 gap-3 sm:max-w-sm sm:gap-4" aria-hidden="true">
+          {[
+            { Icon: FileText, c: 'bg-primary text-white', r: '-rotate-3' },
+            { Icon: Film, c: 'bg-accent text-ink', r: 'rotate-2 translate-y-4' },
+            { Icon: Headphones, c: 'bg-cta text-white', r: '-rotate-2' },
+            { Icon: Globe, c: 'bg-white text-primary ring-1 ring-slate-200', r: 'rotate-3' },
+            { Icon: ShieldCheck, c: 'bg-ink text-accent', r: '-rotate-1 translate-y-4' },
+            { Icon: AppWindow, c: 'bg-primary-soft text-primary', r: 'rotate-2' },
+          ].map(({ Icon, c, r }, i) => (
+            <span class:list={['app-tile grid aspect-square place-items-center rounded-3xl shadow-lift', c, r]} style={`--i:${i}`}>
+              <Icon size={34} stroke-width={1.6} />
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- 04 Hardware Installation & Repair: dark interactive parts tray -->
+{hardware && <PcPartsTray section={hardware} number={num(hardware)} />}
+
+<!-- 05 Virus Removal & Protection: orange-tinted card, shield with bugs circling it -->
+{
+  virus && (
+    <section id={virus.id} class="section scroll-mt-28" aria-labelledby={`${virus.id}-title`}>
+      <div class="container-site">
+        <div class="relative isolate grid grid-cols-1 items-center gap-10 overflow-hidden rounded-3xl bg-cta/[0.07] p-6 ring-1 ring-cta/15 sm:p-10 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-14">
+          <Bug size={220} class="pointer-events-none absolute -right-10 -bottom-14 -z-10 rotate-12 text-cta/[0.06]" aria-hidden="true" />
+          <div class="virus-orbit relative mx-auto grid size-60 place-items-center" aria-hidden="true">
+            <span class="absolute inset-0 rounded-full border-2 border-dashed border-cta/30" />
+            <span class="absolute inset-8 rounded-full bg-white shadow-lift" />
+            <span class="relative grid size-24 place-items-center rounded-3xl bg-primary text-accent shadow-lift">
+              <ShieldCheck size={52} stroke-width={1.6} />
+            </span>
+            <span class="orbit absolute inset-0">
+              {[0, 120, 240].map((a) => (
+                <span class="absolute top-1/2 left-1/2 -mt-5 -ml-5" style={`transform: rotate(${a}deg) translateY(-120px) rotate(-${a}deg)`}>
+                  <span class="bug-chip grid size-10 place-items-center rounded-full bg-cta text-white shadow-soft">
+                    <Bug size={18} />
+                  </span>
+                </span>
+              ))}
+            </span>
+          </div>
+          <div class="min-w-0">
+            <span class="inline-flex rounded-full bg-primary px-3 py-1 font-display text-sm font-extrabold text-white">{num(virus)}</span>
+            <h2 id={`${virus.id}-title`} class:list={['mt-4', h2]}>{virus.title}</h2>
+            <span class="mt-4 block h-1 w-14 rounded-full bg-accent" aria-hidden="true" />
+            <div class:list={['mt-6 space-y-4 text-lg leading-relaxed text-slate-700', linkStyle]} set:html={virus.leadHtml + virus.restHtml} />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- 06 PC Clean Up: the two paragraphs as two contrasting tiles -->
+{
+  clean && (
+    <section id={clean.id} class="section scroll-mt-28 bg-primary-tint" aria-labelledby={`${clean.id}-title`}>
+      <div class="container-site">
+        <span class="inline-flex rounded-full bg-accent px-3 py-1 font-display text-sm font-extrabold text-ink">{num(clean)}</span>
+        <h2 id={`${clean.id}-title`} class:list={['mt-4', h2]}>{clean.title}</h2>
+        <span class="mt-4 block h-1 w-14 rounded-full bg-accent" aria-hidden="true" />
+        <div class="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2">
+          {all(clean).map((para, i) => {
+            const look = [
+              { box: 'bg-white ring-1 ring-slate-200', chip: 'bg-accent text-ink', text: 'text-slate-700', Icon: Fan, big: Wind, faint: 'text-ink/[0.05]' },
+              { box: 'bg-primary text-white', chip: 'bg-accent text-ink', text: 'text-white/90', Icon: Sparkles, big: Sparkles, faint: 'text-white/[0.07]' },
+            ][i % 2];
+            return (
+              <div class:list={['relative isolate overflow-hidden rounded-3xl p-7 transition hover:-translate-y-0.5 hover:shadow-lift sm:p-8', look.box]}>
+                <look.big size={150} class:list={['pointer-events-none absolute -right-8 -bottom-8 -z-10', look.faint]} aria-hidden="true" />
+                <span class:list={['grid size-12 place-items-center rounded-xl', look.chip]}>
+                  <look.Icon size={22} class={i === 0 ? 'clean-fan' : ''} aria-hidden="true" />
+                </span>
+                <div class:list={['mt-5 text-lg leading-relaxed', look.text, linkStyle]} set:html={para} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- Any other WordPress section (none today): simple card so no text is ever lost -->
+{
+  others.map((s) => (
+    <section id={s.id} class="section scroll-mt-28" aria-labelledby={`${s.id}-title`}>
+      <div class="container-site">
+        <h2 id={`${s.id}-title`} class={h2}>{s.title}</h2>
+        <div class:list={['mt-6 space-y-4 text-lg leading-relaxed text-slate-600', linkStyle]} set:html={s.leadHtml + s.restHtml} />
+      </div>
+    </section>
+  ))
+}
+
+<!-- Areas we serve: two boxes of suburb pills -->
+{
+  p.areas.length > 0 && (
+    <section class="section" aria-labelledby="areas-title">
+      <div class="container-site">
+        <h2 id="areas-title" class={h2}>AREAS WE SERVE</h2>
+        <span class="mt-4 block h-1 w-14 rounded-full bg-accent" aria-hidden="true" />
+        <div class="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {p.areas.map((g, i) => (
+            <div class:list={['rounded-3xl p-6 sm:p-8', i % 2 === 0 ? 'bg-primary-tint' : 'bg-accent-soft/50']}>
+              <h3 class="flex items-center gap-3 text-xl font-extrabold text-ink">
+                <span class:list={['grid size-10 place-items-center rounded-xl', i % 2 === 0 ? 'bg-primary text-white' : 'bg-cta text-white']}>
+                  <MapPin size={18} aria-hidden="true" />
+                </span>
+                {g.title}
+              </h3>
+              <ul class="mt-5 flex flex-wrap gap-2">
+                {g.links.map((l) => (
+                  <li>
+                    <a href={l.href} class="block rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-ink ring-1 ring-slate-200 transition hover:bg-primary hover:text-white hover:ring-primary">
+                      {l.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<CtaBand />
+
+<style>
+  /* 02: heartbeat trace runs along the line */
+  .health-ecg .ecg-base {
+    stroke: color-mix(in oklab, var(--brand-primary), white 80%);
+    stroke-width: 2;
+  }
+  .health-ecg .ecg-run {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 18 82;
+    animation: ecg-run 3s linear infinite;
+  }
+  @keyframes ecg-run {
+    from { stroke-dashoffset: 100; }
+    to { stroke-dashoffset: 0; }
+  }
+  /* 03: app tiles float a little, out of step */
+  .app-tile {
+    animation: app-float 5s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.8s);
+  }
+  @keyframes app-float {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -6px; }
+  }
+  /* 05: bugs circle the shield */
+  .virus-orbit .orbit {
+    animation: orbit 18s linear infinite;
+  }
+  .virus-orbit .bug-chip {
+    animation: orbit 18s linear infinite reverse;
+  }
+  @keyframes orbit {
+    to { transform: rotate(360deg); }
+  }
+  /* 06: the fan icon spins */
+  :global(.clean-fan) {
+    animation: orbit 3s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .health-ecg .ecg-run,
+    .app-tile,
+    .virus-orbit .orbit,
+    .virus-orbit .bug-chip,
+    :global(.clean-fan) {
+      animation: none;
+    }
+  }
+</style>
