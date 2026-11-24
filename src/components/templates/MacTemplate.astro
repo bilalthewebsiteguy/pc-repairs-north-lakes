@@ -1,0 +1,644 @@
+---
+// Mac Repair Services page (/mac-repair-services/). Same words as WordPress (split by src/lib/mac.ts),
+// laid out as: service-compass hero, intro + side card, the five Mac services as mixed tiles,
+// the dark "find your Mac" models section, the OS versions as a timeline with "About Mac",
+// the other services, the areas we serve and the call band.
+// WordPress heading levels are kept: list titles are <h3>, service titles are <h4>.
+import ArrowRight from '@lucide/astro/icons/arrow-right';
+import BatteryCharging from '@lucide/astro/icons/battery-charging';
+import BookOpen from '@lucide/astro/icons/book-open';
+import Check from '@lucide/astro/icons/check';
+import DatabaseBackup from '@lucide/astro/icons/database-backup';
+import Droplets from '@lucide/astro/icons/droplets';
+import FileText from '@lucide/astro/icons/file-text';
+import Gauge from '@lucide/astro/icons/gauge';
+import HardDrive from '@lucide/astro/icons/hard-drive';
+import MapPin from '@lucide/astro/icons/map-pin';
+import MemoryStick from '@lucide/astro/icons/memory-stick';
+import Monitor from '@lucide/astro/icons/monitor';
+import Mouse from '@lucide/astro/icons/mouse';
+import PanelTopClose from '@lucide/astro/icons/panel-top-close';
+import Phone from '@lucide/astro/icons/phone';
+import Plug from '@lucide/astro/icons/plug';
+import Sparkles from '@lucide/astro/icons/sparkles';
+import Wifi from '@lucide/astro/icons/wifi';
+import Wrench from '@lucide/astro/icons/wrench';
+import CtaBand from '../CtaBand.astro';
+import HeroMacCompass from '../HeroMacCompass.astro';
+import MacModelFinder from '../MacModelFinder.astro';
+import SideCallCard from '../SideCallCard.astro';
+import { site } from '../../config/site';
+import { macSections, type MacBlock } from '../../lib/mac';
+
+interface Props {
+  heading: string; // the page's single H1 (same words as the WordPress page)
+  body: string; // raw exported markdown of the page
+}
+const { heading, body } = Astro.props;
+const p = await macSections(body);
+
+// Quick facts for the hero, quoted word for word from the page text (dropped if not found)
+const facts = ['We Repair All MAC Models', 'From hardware problems to software problems', 'professional and experienced technicians'].filter((f) =>
+  p.allText.includes(f),
+);
+
+const paras = (html: string) => html.match(/<p>[\s\S]*?<\/p>/g) ?? (html ? [html] : []);
+const plain = (html: string) => html.replace(/<[^>]+>/g, '').trim();
+
+// "About Mac": three WordPress paragraphs. The small diagrams next to them only use words found in
+// those paragraphs (if the words aren't there, the diagram is simply not shown).
+const aboutParas = p.about ? paras(p.about.html) : [];
+const aboutText = aboutParas.map(plain);
+const aboutDesigned = aboutParas.length === 3;
+const years = aboutText[0]?.match(/from early (\d{4}) to late (\d{4})/); // 2006, 2011
+const replaced = aboutText[0]?.match(/replaced the (\w+) series and (\w+) series/); // iBook, PowerBook
+const brand = aboutText[0]?.match(/^The (\w+) was/)?.[1]; // MacBook
+const move = aboutText[0]?.match(/\w+[–-](\w+) transition from (\w+)/); // Intel, PowerPC
+const family = aboutText[2]?.match(/(MacBook Air)[\s\S]*(MacBook Pro)/); // MacBook Air, MacBook Pro
+// The keyword paragraph as pills, one phrase each (the full stops stay in the text, hidden visually)
+const phrases = aboutText[1] && /Repair Brisbane/.test(aboutText[1]) ? aboutText[1].split(/(?<=\.)\s+/) : null;
+const svc = (re: RegExp) => p.services.find((s) => re.test(s.title));
+
+// The five services, in the tile order used below (any extra WordPress service is added at the end)
+const lcd = svc(/lcd|screen/i);
+const recovery = svc(/recovery/i);
+const clean = svc(/clean/i);
+const storage = svc(/storage/i);
+const memory = svc(/memory/i);
+const placed = [lcd, recovery, clean, storage, memory];
+const extraServices = p.services.filter((s) => !placed.includes(s));
+
+const iconFor = (title: string) =>
+  /lcd|screen/i.test(title) ? Monitor
+  : /recovery/i.test(title) ? DatabaseBackup
+  : /clean/i.test(title) ? Sparkles
+  : /storage/i.test(title) ? HardDrive
+  : /memory/i.test(title) ? MemoryStick
+  : Wrench;
+const otherIcon = (text: string) =>
+  /battery/i.test(text) ? BatteryCharging
+  : /port/i.test(text) ? Plug
+  : /water/i.test(text) ? Droplets
+  : /mouse/i.test(text) ? Mouse
+  : /internet/i.test(text) ? Wifi
+  : /speed|performance/i.test(text) ? Gauge
+  : /popup/i.test(text) ? PanelTopClose
+  : Wrench;
+const tones = ['bg-primary text-white', 'bg-accent text-ink', 'bg-cta text-white'];
+
+// Versions timeline: oldest first (the WordPress list is newest first)
+const versions = [...(p.versions?.items ?? [])].reverse();
+// Every block that isn't placed in a designed section still gets shown (simple card)
+const designed: (MacBlock | undefined)[] = [...placed, p.versions, p.models, p.others, p.about];
+const leftovers = p.blocks.filter((b) => !designed.includes(b) && !extraServices.includes(b));
+
+const linkStyle =
+  '[&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:decoration-accent [&_a]:decoration-2 [&_a]:underline-offset-4 [&_strong]:text-ink';
+const h3 = 'text-3xl font-extrabold text-primary sm:text-4xl';
+---
+
+<!-- Hero: blueprint grid + the "service compass" (Mac services round a dial, MacBook in the middle) -->
+<section class="relative isolate overflow-hidden bg-primary text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.09] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px] [mask-image:linear-gradient(to_right,transparent,black_45%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="pointer-events-none absolute -top-40 -left-40 -z-10 size-[34rem] rounded-full bg-white/[0.05] blur-3xl" aria-hidden="true"></div>
+  <div class="container-site grid grid-cols-1 items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10 lg:py-16">
+    <!-- text block sits a little higher than centre on desktop, so it lines up with the top of the dial -->
+    <div class="lg:-translate-y-12">
+      <h1 class="font-display text-[2.5rem] leading-[1.02] font-extrabold tracking-[-0.02em] text-white sm:text-6xl xl:text-[4.1rem]">
+        {heading}
+      </h1>
+      <p class="mt-6 max-w-xl text-xl text-white/85">Servicing {site.area}</p>
+      {
+        facts.length > 0 && (
+          <ul class="mt-7 space-y-2.5" role="list">
+            {facts.map((f) => (
+              <li class="flex items-center gap-3 text-lg text-white/90">
+                <span class="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-ink">
+                  <Check size={14} stroke-width={3.5} aria-hidden="true" />
+                </span>
+                <span class="first-letter:uppercase">{f}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6 text-base sm:text-lg">
+          <Phone size={19} aria-hidden="true" /> Call {site.phone.display}
+        </a>
+        <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6 text-base sm:text-lg">
+          <FileText size={18} aria-hidden="true" /> Get a Quote
+        </a>
+      </div>
+    </div>
+    <div class="mx-auto w-full max-w-[560px] lg:max-w-none">
+      <HeroMacCompass items={[...p.services.map((s) => s.title), ...(p.others?.items ?? []).map(plain)]} links={p.services} />
+    </div>
+  </div>
+</section>
+
+<!-- Intro: the WordPress intro as a statement, then one row of tiles to the five services -->
+<section class="section">
+  <div class="container-site">
+    <div class="relative max-w-4xl pl-6">
+      <span class="absolute top-1 bottom-1 left-0 w-1.5 rounded-full bg-accent" aria-hidden="true"></span>
+      <div class:list={['font-display text-lg leading-snug font-bold text-ink sm:text-[1.5rem] sm:leading-snug [&_strong]:text-primary', linkStyle]} set:html={p.introHtml} />
+    </div>
+    <ul class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4" role="list">
+      {
+        p.services.map((s, i) => {
+          const Icon = iconFor(s.title);
+          return (
+            <li class:list={[i === p.services.length - 1 && p.services.length % 2 === 1 && 'col-span-2 sm:col-span-1']}>
+              <a href={`#${s.id}`} class="group relative isolate flex h-full flex-col gap-4 overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift hover:ring-primary/30">
+                <Icon size={80} class="pointer-events-none absolute -right-4 -bottom-4 -z-10 text-ink/[0.04]" aria-hidden="true" />
+                <span class:list={['grid size-11 shrink-0 place-items-center rounded-xl', tones[i % 3]]}>
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <span class="font-display text-[15px] leading-snug font-extrabold text-ink group-hover:text-primary">{s.title}</span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- The five Mac services as mixed tiles (WordPress <h4> headings) -->
+<section class="section bg-primary-tint" aria-label="Mac services">
+  <div class="container-site grid grid-cols-1 gap-5 lg:grid-cols-3">
+    {
+      lcd && (
+        <article id={lcd.id} class="relative isolate scroll-mt-28 overflow-hidden rounded-3xl bg-ink p-7 text-white transition hover:-translate-y-0.5 hover:shadow-lift sm:p-9 lg:col-span-2 lg:grid lg:grid-cols-[minmax(0,1fr)_240px] lg:items-center lg:gap-8">
+          <div class="pointer-events-none absolute inset-0 -z-10 opacity-[0.08] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:22px_22px]" aria-hidden="true" />
+          <div>
+            <span class="grid size-12 place-items-center rounded-xl bg-accent text-ink">
+              <Monitor size={22} aria-hidden="true" />
+            </span>
+            <h4 class="mt-5 text-2xl font-extrabold text-white sm:text-[1.7rem]">{lcd.title}</h4>
+            <div class="mt-4 text-lg leading-relaxed text-white/80" set:html={lcd.html} />
+          </div>
+          <!-- a flickering screen with a dead pixel and lines, then a gold scan clears it -->
+          <svg viewBox="0 0 240 170" class="lcd-art mx-auto mt-8 w-full max-w-[260px] lg:mt-0" fill="none" stroke-linecap="round" aria-hidden="true">
+            <rect x="20" y="10" width="200" height="128" rx="10" class="lcd-lid" />
+            <rect x="30" y="20" width="180" height="108" rx="4" class="lcd-screen" />
+            <g class="lcd-fault">
+              <path d="M30 52 H210 M30 90 H210" class="lcd-line" />
+              <path d="M30 70 H210" class="lcd-line lcd-line-2" />
+              <circle cx="82" cy="40" r="3" class="lcd-pixel" />
+              <circle cx="160" cy="106" r="3" class="lcd-pixel" />
+            </g>
+            <rect x="30" y="20" width="26" height="108" class="lcd-scan" />
+            <path d="M8 142 H232 L222 154 H18 Z" class="lcd-base" />
+            <path d="M104 142 h32 v3 h-32 z" class="lcd-notch" />
+          </svg>
+        </article>
+      )
+    }
+    {
+      recovery && (
+        <article id={recovery.id} class="relative isolate scroll-mt-28 overflow-hidden rounded-3xl bg-primary p-7 text-white transition hover:-translate-y-0.5 hover:shadow-lift sm:p-8">
+          <DatabaseBackup size={150} class="pointer-events-none absolute -right-8 -bottom-8 -z-10 text-white/[0.07]" aria-hidden="true" />
+          <span class="grid size-12 place-items-center rounded-xl bg-accent text-ink">
+            <DatabaseBackup size={22} aria-hidden="true" />
+          </span>
+          <h4 class="mt-5 text-2xl font-extrabold text-white">{recovery.title}</h4>
+          <div class="mt-4 leading-relaxed text-white/85" set:html={recovery.html} />
+        </article>
+      )
+    }
+    {
+      clean && (
+        <article id={clean.id} class="relative isolate scroll-mt-28 overflow-hidden rounded-3xl bg-accent-soft/70 p-7 transition hover:-translate-y-0.5 hover:shadow-lift sm:p-8">
+          <Sparkles size={150} class="pointer-events-none absolute -right-8 -bottom-8 -z-10 text-ink/[0.05]" aria-hidden="true" />
+          <span class="grid size-12 place-items-center rounded-xl bg-primary text-white">
+            <Sparkles size={22} class="clean-twinkle" aria-hidden="true" />
+          </span>
+          <h4 class="mt-5 text-2xl font-extrabold text-ink">{clean.title}</h4>
+          <div class="mt-4 leading-relaxed text-slate-700" set:html={clean.html} />
+        </article>
+      )
+    }
+    {
+      storage && (
+        <article id={storage.id} class="relative isolate scroll-mt-28 overflow-hidden rounded-3xl bg-white p-7 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift sm:p-8">
+          <span class="grid size-12 place-items-center rounded-xl bg-cta text-white">
+            <HardDrive size={22} aria-hidden="true" />
+          </span>
+          <h4 class="mt-5 text-2xl font-extrabold text-ink">{storage.title}</h4>
+          <div class="mt-4 leading-relaxed text-slate-600" set:html={storage.html} />
+          <!-- storage bar growing -->
+          <div class="mt-6 h-3 overflow-hidden rounded-full bg-primary-soft" aria-hidden="true">
+            <div class="storage-fill h-full rounded-full bg-gradient-to-r from-primary to-accent" />
+          </div>
+        </article>
+      )
+    }
+    {
+      memory && (
+        <article id={memory.id} class="relative isolate scroll-mt-28 overflow-hidden rounded-3xl bg-cta/[0.07] p-7 ring-1 ring-cta/10 transition hover:-translate-y-0.5 hover:shadow-lift sm:p-8">
+          <span class="grid size-12 place-items-center rounded-xl bg-accent text-ink">
+            <MemoryStick size={22} aria-hidden="true" />
+          </span>
+          <h4 class="mt-5 text-2xl font-extrabold text-ink">{memory.title}</h4>
+          <div class="mt-4 leading-relaxed text-slate-700" set:html={memory.html} />
+          <!-- memory sticks lighting up one by one -->
+          <div class="mt-6 flex gap-2" aria-hidden="true">
+            {[0, 1, 2, 3].map((k) => (
+              <span class="ram-stick h-8 flex-1 rounded-md bg-ink/10" style={`--k:${k}`} />
+            ))}
+          </div>
+        </article>
+      )
+    }
+    {
+      extraServices.map((s, i) => (
+        <article id={s.id} class="scroll-mt-28 rounded-3xl bg-white p-7 ring-1 ring-slate-200 sm:p-8">
+          <span class:list={['grid size-12 place-items-center rounded-xl', tones[i % 3]]}>
+            <Wrench size={22} aria-hidden="true" />
+          </span>
+          <h4 class="mt-5 text-2xl font-extrabold text-ink">{s.title}</h4>
+          <div class:list={['mt-4 leading-relaxed text-slate-600', linkStyle]} set:html={s.html} />
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<!-- We Repair All MAC Models: dark "find your Mac" section -->
+{p.models && <MacModelFinder block={p.models} />}
+
+<!-- iOS Installation & Update: the versions as a timeline, then "About Mac" -->
+{
+  p.versions && (
+    <section id={p.versions.id} class="section scroll-mt-28" aria-labelledby={`${p.versions.id}-title`}>
+      <div class="container-site">
+        <h3 id={`${p.versions.id}-title`} class={h3}>{p.versions.title}</h3>
+        <span class="mt-4 block h-1 w-14 rounded-full bg-accent" aria-hidden="true" />
+
+        <ol class="version-line relative mt-10 grid grid-cols-1 gap-2.5 lg:gap-0" style={`--n:${versions.length}`}>
+          <span class="absolute top-2 bottom-2 left-[11px] w-0.5 rounded-full bg-gradient-to-b from-primary-soft to-accent lg:top-1/2 lg:right-4 lg:bottom-auto lg:left-4 lg:h-0.5 lg:w-auto lg:bg-gradient-to-r" aria-hidden="true" />
+          {versions.map((v, i) => {
+            const last = i === versions.length - 1;
+            return (
+              <li class="relative flex items-center gap-4 lg:h-36 lg:flex-col lg:justify-center">
+                <span
+                  class:list={[
+                    'relative z-10 grid shrink-0 place-items-center rounded-full ring-4 ring-white',
+                    last ? 'size-6 bg-accent text-ink' : 'size-6 bg-primary text-white',
+                  ]}
+                  aria-hidden="true"
+                >
+                  <Check size={12} stroke-width={3.5} />
+                </span>
+                <span
+                  class:list={[
+                    'rounded-full px-3 py-1 font-display text-sm font-bold whitespace-nowrap lg:absolute',
+                    i % 2 === 0 ? 'lg:top-3' : 'lg:bottom-3',
+                    last ? 'bg-accent text-ink' : 'bg-primary-tint text-ink ring-1 ring-slate-200',
+                  ]}
+                  set:html={v}
+                />
+              </li>
+            );
+          })}
+        </ol>
+
+        <div class="mt-14 grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_340px]">
+          {
+            p.about ? (
+              <article id={p.about.id} class="relative isolate scroll-mt-28 overflow-hidden rounded-3xl bg-primary-tint p-7 sm:p-10">
+                <BookOpen size={200} class="pointer-events-none absolute -right-10 -bottom-12 -z-10 text-primary/[0.05]" aria-hidden="true" />
+                <div class="flex items-center gap-4">
+                  <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-white">
+                    <BookOpen size={22} aria-hidden="true" />
+                  </span>
+                  <h4 class="text-2xl font-extrabold text-ink sm:text-[1.7rem]">{p.about.title}</h4>
+                </div>
+
+                {aboutDesigned ? (
+                  <div>
+                    {/* 1. history paragraph + timeline panel */}
+                    <div class="mt-7 grid grid-cols-1 items-center gap-6 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+                      <div class:list={['text-lg leading-relaxed text-slate-700', linkStyle]} set:html={aboutParas[0]} />
+                      {years && (
+                        <div class="relative isolate overflow-hidden rounded-2xl bg-ink p-6 text-white shadow-lift" aria-hidden="true">
+                          <div class="pointer-events-none absolute inset-0 -z-10 opacity-[0.08] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:20px_20px]" />
+                          <div class="flex items-center justify-between font-display text-sm font-extrabold">
+                            <span class="text-white/70">{years[1]}</span>
+                            <span class="text-accent">{years[2]}</span>
+                          </div>
+                          <div class="relative mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                            <span class="about-bar absolute inset-y-0 left-0 w-full rounded-full bg-gradient-to-r from-primary-light to-accent" />
+                          </div>
+                          {replaced && brand && (
+                            <div class="mt-6 flex items-center gap-2 sm:gap-3">
+                              <div class="min-w-0 space-y-2">
+                                <span class="block rounded-lg bg-white/10 px-3 py-1.5 font-display text-sm font-bold text-white/80 line-through decoration-white/30">{replaced[1]}</span>
+                                <span class="block rounded-lg bg-white/10 px-3 py-1.5 font-display text-sm font-bold text-white/80 line-through decoration-white/30">{replaced[2]}</span>
+                              </div>
+                              <svg viewBox="0 0 60 60" class="h-12 w-9 shrink-0 sm:h-14 sm:w-12" fill="none" stroke-linecap="round">
+                                <path d="M4 14 C30 14 30 30 50 30 M4 46 C30 46 30 30 50 30" class="about-flow" />
+                                <path d="M44 24 l7 6 l-7 6" stroke="var(--brand-accent)" stroke-width="2.5" />
+                              </svg>
+                              <span class="shrink-0 rounded-xl bg-accent px-3 py-2 font-display text-base font-extrabold text-ink shadow-lift sm:px-4 sm:py-2.5 sm:text-lg">{brand}</span>
+                            </div>
+                          )}
+                          {move && (
+                            <p class="mt-5 inline-flex items-center gap-2 rounded-full bg-white/[0.07] px-3 py-1 text-xs font-bold text-white/75 ring-1 ring-white/10">
+                              {move[2]}
+                              <ArrowRight size={13} class="text-accent" />
+                              {move[1]}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 2. the keyword paragraph as pills */}
+                    {phrases ? (
+                      <ul class="mt-8 flex flex-wrap gap-2">
+                        {phrases.map((ph) => {
+                          const dot = ph.endsWith('.');
+                          return (
+                            <li class="flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:ring-accent">
+                              <span class="size-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                              {dot ? ph.slice(0, -1) : ph}
+                              {dot && <span class="sr-only">.</span>}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <div class:list={['mt-8 rounded-2xl bg-white p-5 text-[15px] leading-relaxed text-slate-600 ring-1 ring-slate-200', linkStyle]} set:html={aboutParas[1]} />
+                    )}
+
+                    {/* 3. "family" drawing + last paragraph */}
+                    <div class="mt-8 grid grid-cols-1 items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+                      {family && brand && (
+                        <div class="relative isolate overflow-hidden rounded-2xl bg-ink px-4 pt-6 pb-5 text-white shadow-lift md:order-1" aria-hidden="true">
+                          <div class="flex items-end justify-around gap-2">
+                            {[
+                              { label: family[1], w: 'w-[4.2rem]', lid: 'h-9', on: false },
+                              { label: brand, w: 'w-[5.2rem]', lid: 'h-11', on: true },
+                              { label: family[2], w: 'w-[6.4rem]', lid: 'h-[3.4rem]', on: false },
+                            ].map((m) => (
+                              <div class="flex flex-col items-center gap-2">
+                                <div class:list={['flex flex-col items-center', m.w, m.on && 'about-pick']}>
+                                  <span class:list={['block w-[84%] rounded-t-md border-2 border-b-0 p-1', m.lid, m.on ? 'border-accent' : 'border-white/60']}>
+                                    <span class:list={['block h-full rounded-sm', m.on ? 'bg-accent/30' : 'bg-white/10']} />
+                                  </span>
+                                  <span class:list={['block h-1.5 w-full rounded-b-md', m.on ? 'bg-accent' : 'bg-white/60']} />
+                                </div>
+                                <span class:list={['text-center font-display text-[11px] leading-tight font-extrabold sm:text-xs', m.on ? 'text-accent' : 'text-white/70']}>{m.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <span class="mt-4 block h-1.5 rounded-full bg-white/10" />
+                        </div>
+                      )}
+                      <div class:list={['text-lg leading-relaxed text-slate-700 md:order-2', linkStyle]} set:html={aboutParas[2]} />
+                    </div>
+                  </div>
+                ) : (
+                  <div class="mt-6 space-y-5">
+                    {aboutParas.map((para) => (
+                      <div class:list={['text-lg leading-relaxed text-slate-700', linkStyle]} set:html={para} />
+                    ))}
+                  </div>
+                )}
+              </article>
+            ) : (
+              <div />
+            )
+          }
+          <div>
+            <SideCallCard heading="Talk to a local technician" />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- Other Services: icon tiles + a call tile -->
+{
+  p.others && (
+    <section id={p.others.id} class="section scroll-mt-28 bg-primary-tint" aria-labelledby={`${p.others.id}-title`}>
+      <div class="container-site">
+        <h3 id={`${p.others.id}-title`} class={h3}>{p.others.title}</h3>
+        <span class="mt-4 block h-1 w-14 rounded-full bg-accent" aria-hidden="true" />
+        <ul class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {p.others.items.map((item, i) => {
+            const Icon = otherIcon(plain(item));
+            return (
+              <li class="group relative isolate flex items-center gap-4 overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift">
+                <Icon size={90} class="pointer-events-none absolute -right-5 -bottom-6 -z-10 text-ink/[0.04] transition group-hover:text-accent/20" aria-hidden="true" />
+                <span class:list={['grid size-12 shrink-0 place-items-center rounded-xl', tones[i % 3]]}>
+                  <Icon size={22} aria-hidden="true" />
+                </span>
+                <span class="font-display text-base leading-snug font-extrabold text-ink" set:html={item} />
+              </li>
+            );
+          })}
+          <li class="relative isolate overflow-hidden rounded-2xl bg-cta p-5 text-white shadow-lift">
+            <Phone size={90} class="pointer-events-none absolute -right-4 -bottom-5 -z-10 text-white/[0.12]" aria-hidden="true" />
+            <a href={`tel:${site.phone.tel}`} class="flex h-full flex-col justify-center hover:underline">
+              <span class="text-sm font-semibold text-white/85">Something else?</span>
+              <span class="mt-1 flex items-center gap-2 font-display text-xl font-extrabold">
+                <Phone size={18} aria-hidden="true" /> {site.phone.display}
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<!-- Any other WordPress block (none today): simple card so no text is ever lost -->
+{
+  leftovers.map((b) => (
+    <section id={b.id} class="section scroll-mt-28">
+      <div class="container-site">
+        {b.level === 3 ? <h3 class={h3}>{b.title}</h3> : <h4 class="text-2xl font-extrabold text-ink">{b.title}</h4>}
+        {b.items.length > 0 ? (
+          <ul class="mt-6 flex flex-wrap gap-2">
+            {b.items.map((it) => (
+              <li class="rounded-full bg-primary-tint px-3.5 py-1.5 text-sm font-semibold text-ink" set:html={it} />
+            ))}
+          </ul>
+        ) : (
+          <div class:list={['mt-6 space-y-4 text-lg leading-relaxed text-slate-600', linkStyle]} set:html={b.html} />
+        )}
+      </div>
+    </section>
+  ))
+}
+
+<!-- Areas we serve: two boxes of suburb pills -->
+{
+  p.areas.length > 0 && (
+    <section class="section" aria-labelledby="areas-title">
+      <div class="container-site">
+        <h2 id="areas-title" class={h3}>{p.areasTitle}</h2>
+        <span class="mt-4 block h-1 w-14 rounded-full bg-accent" aria-hidden="true" />
+        <div class="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {p.areas.map((g, i) => (
+            <div class:list={['rounded-3xl p-6 sm:p-8', i % 2 === 0 ? 'bg-primary-tint' : 'bg-accent-soft/50']}>
+              <h3 class="flex items-center gap-3 text-xl font-extrabold text-ink">
+                <span class:list={['grid size-10 place-items-center rounded-xl', i % 2 === 0 ? 'bg-primary text-white' : 'bg-cta text-white']}>
+                  <MapPin size={18} aria-hidden="true" />
+                </span>
+                {g.title}
+              </h3>
+              <ul class="mt-5 flex flex-wrap gap-2">
+                {g.links.map((l) => (
+                  <li>
+                    <a href={l.href} class="block rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-ink ring-1 ring-slate-200 transition hover:bg-primary hover:text-white hover:ring-primary">
+                      {l.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<CtaBand />
+
+<style>
+  /* versions timeline: one column per version on desktop */
+  @media (min-width: 64rem) {
+    .version-line {
+      grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    }
+  }
+
+  /* LCD tile: lines and dead pixels flicker, a gold scan clears them, repeat */
+  .lcd-art .lcd-lid {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 25%);
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+  }
+  .lcd-art .lcd-screen {
+    fill: color-mix(in oklab, var(--brand-ink), black 20%);
+  }
+  .lcd-art .lcd-base {
+    fill: color-mix(in oklab, var(--brand-primary), black 25%);
+    stroke: rgb(255 255 255 / 0.6);
+    stroke-width: 1.5;
+  }
+  .lcd-art .lcd-notch {
+    fill: rgb(255 255 255 / 0.3);
+  }
+  .lcd-art .lcd-line {
+    stroke: rgb(255 255 255 / 0.75);
+    stroke-width: 2;
+    animation: lcd-flicker 0.9s steps(2) infinite;
+  }
+  .lcd-art .lcd-line-2 {
+    stroke: var(--brand-cta);
+    animation-delay: -0.4s;
+  }
+  .lcd-art .lcd-pixel {
+    fill: var(--brand-cta);
+  }
+  .lcd-art .lcd-fault {
+    animation: lcd-fault 6s ease-in-out infinite;
+  }
+  .lcd-art .lcd-scan {
+    fill: var(--brand-accent);
+    opacity: 0;
+    animation: lcd-scan 6s ease-in-out infinite;
+  }
+  @keyframes lcd-flicker {
+    50% { opacity: 0.25; }
+  }
+  @keyframes lcd-fault {
+    0%, 45% { opacity: 1; }
+    60%, 92% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes lcd-scan {
+    0%, 42% { opacity: 0; transform: translateX(0); }
+    45% { opacity: 0.5; }
+    60% { opacity: 0.5; transform: translateX(154px); }
+    62%, 100% { opacity: 0; transform: translateX(154px); }
+  }
+
+  /* About Mac: the years bar fills, the "replaced by" lines flow, the MacBook glows */
+  .about-bar {
+    transform-origin: left;
+    animation: about-bar 5s ease-in-out infinite;
+  }
+  @keyframes about-bar {
+    0% { transform: scaleX(0); }
+    55%, 100% { transform: scaleX(1); }
+  }
+  .about-flow {
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+    stroke-dasharray: 4 5;
+    animation: about-flow 1.2s linear infinite;
+  }
+  @keyframes about-flow {
+    to { stroke-dashoffset: -18; }
+  }
+  .about-pick {
+    animation: about-pick 3s ease-in-out infinite;
+  }
+  @keyframes about-pick {
+    0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 0 transparent); }
+    50% { transform: translateY(-4px); filter: drop-shadow(0 6px 10px color-mix(in oklab, var(--brand-accent), transparent 55%)); }
+  }
+
+  /* storage bar grows, memory sticks light up, sparkles twinkle */
+  .storage-fill {
+    animation: storage-fill 4s ease-in-out infinite alternate;
+  }
+  @keyframes storage-fill {
+    from { width: 28%; }
+    to { width: 92%; }
+  }
+  .ram-stick {
+    animation: ram-on 4s ease-in-out infinite;
+    animation-delay: calc(var(--k) * 0.35s);
+  }
+  @keyframes ram-on {
+    0%, 15% { background: color-mix(in oklab, var(--brand-ink), transparent 90%); }
+    35%, 80% { background: var(--brand-accent); }
+    100% { background: color-mix(in oklab, var(--brand-ink), transparent 90%); }
+  }
+  :global(.clean-twinkle) {
+    animation: twinkle 2.4s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { transform: scale(1) rotate(0); }
+    50% { transform: scale(1.15) rotate(12deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lcd-art *,
+    .storage-fill,
+    .ram-stick,
+    .about-bar,
+    .about-flow,
+    .about-pick,
+    :global(.clean-twinkle) {
+      animation: none !important;
+    }
+    .lcd-art .lcd-fault { opacity: 0; }
+    .storage-fill { width: 70%; }
+    .ram-stick { background: var(--brand-accent); }
+  }
+</style>

@@ -1,0 +1,296 @@
+---
+/**
+ * Mac Repair Services hero: a "service compass". The Mac services from the WordPress page (the five
+ * "####" services + the "Other Services" list) sit round the ring as icon chips. A gold pointer
+ * sweeps round (pure CSS, one service every 1.8s); the chip it passes lights up, and the MacBook in
+ * the middle shows that service's icon on its screen with the service name underneath.
+ * No logos. The pills underneath link to the five service sections.
+ */
+import BatteryCharging from '@lucide/astro/icons/battery-charging';
+import DatabaseBackup from '@lucide/astro/icons/database-backup';
+import Droplets from '@lucide/astro/icons/droplets';
+import Gauge from '@lucide/astro/icons/gauge';
+import HardDrive from '@lucide/astro/icons/hard-drive';
+import MemoryStick from '@lucide/astro/icons/memory-stick';
+import Monitor from '@lucide/astro/icons/monitor';
+import Mouse from '@lucide/astro/icons/mouse';
+import PanelTopClose from '@lucide/astro/icons/panel-top-close';
+import Plug from '@lucide/astro/icons/plug';
+import Sparkles from '@lucide/astro/icons/sparkles';
+import Wifi from '@lucide/astro/icons/wifi';
+import Wrench from '@lucide/astro/icons/wrench';
+
+interface Props {
+  items: string[]; // service names, WordPress words (five services first, then "Other Services")
+  links: { id: string; title: string }[]; // the five service sections, for the pills
+}
+const { items, links } = Astro.props;
+
+const iconFor = (t: string) =>
+  /clean/i.test(t) ? Sparkles
+  : /storage/i.test(t) ? HardDrive
+  : /memory/i.test(t) ? MemoryStick
+  : /recovery/i.test(t) ? DatabaseBackup
+  : /lcd|screen/i.test(t) ? Monitor
+  : /battery/i.test(t) ? BatteryCharging
+  : /port/i.test(t) ? Plug
+  : /water/i.test(t) ? Droplets
+  : /mouse/i.test(t) ? Mouse
+  : /internet/i.test(t) ? Wifi
+  : /speed|performance/i.test(t) ? Gauge
+  : /popup/i.test(t) ? PanelTopClose
+  : Wrench;
+
+// Service name in up to three short lines for the middle of the dial
+const wrap = (text: string, max = 17) => {
+  const lines: string[] = [];
+  for (const word of text.split(/\s+/)) {
+    const last = lines[lines.length - 1];
+    if (last !== undefined && (last + ' ' + word).length <= max) lines[lines.length - 1] = last + ' ' + word;
+    else lines.push(word);
+  }
+  return lines;
+};
+
+const services = items.map((t) => ({ text: t, Icon: iconFor(t), lines: wrap(t) }));
+const n = Math.max(services.length, 1);
+const STEP = 1.8;
+const CX = 280;
+const CY = 260;
+const R_CHIPS = 196;
+const angle = (i: number) => -90 + (i * 360) / n;
+const at = (r: number, deg: number) => {
+  const a = (deg * Math.PI) / 180;
+  return { x: CX + r * Math.cos(a), y: CY + r * Math.sin(a) };
+};
+const ticks = Array.from({ length: 72 }, (_, k) => k * 5);
+const arcA = at(236, -90 - 180 / n + 4);
+const arcB = at(236, -90 + 180 / n - 4);
+const delay = (i: number) => `${(i * STEP - STEP / 2).toFixed(2)}s`;
+// Keyframes depend on how many services there are (one step = 100% / n of the cycle),
+// so they are built here and added as a small inline style
+const share = 100 / n;
+const on = `${(share * 0.15).toFixed(2)}%`;
+const hold = `${(share * 0.85).toFixed(2)}%`;
+const off = `${share.toFixed(2)}%`;
+const keyframes = `
+@keyframes mc-pop { 0% { transform: scale(1); } ${on}, ${hold} { transform: scale(1.18); } ${off}, 100% { transform: scale(1); } }
+@keyframes mc-on { 0% { opacity: 0; } ${on}, ${hold} { opacity: 1; } ${off}, 100% { opacity: 0; } }
+@keyframes mc-icon { 0% { color: rgb(255 255 255 / 0.75); } ${on}, ${hold} { color: var(--brand-ink); } ${off}, 100% { color: rgb(255 255 255 / 0.75); } }
+@keyframes mc-show { 0% { opacity: 0; transform: translateY(5px); } ${on}, ${hold} { opacity: 1; transform: none; } ${off}, 100% { opacity: 0; transform: translateY(-5px); } }
+`;
+---
+
+<style is:inline set:html={keyframes}></style>
+
+<div class="hero-mc relative mx-auto w-full" style={`--cycle:${(n * STEP).toFixed(2)}s`}>
+  <svg viewBox="0 0 560 520" class="w-full overflow-visible" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <defs>
+      <radialGradient id="mc-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0.22"></stop>
+        <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+      </radialGradient>
+      <radialGradient id="mc-disc" cx="50%" cy="35%" r="70%">
+        <stop offset="0" stop-color="var(--brand-primary)" stop-opacity="0.55"></stop>
+        <stop offset="1" stop-color="var(--brand-ink)" stop-opacity="1"></stop>
+      </radialGradient>
+    </defs>
+
+    <circle cx={CX} cy={CY} r="258" fill="url(#mc-glow)"></circle>
+
+    <!-- bezel + ticks -->
+    <circle cx={CX} cy={CY} r="236" class="mc-bezel"></circle>
+    {
+      ticks.map((d) => {
+        const major = d % 30 === 0;
+        const a = at(236, d);
+        const b = at(major ? 222 : 228, d);
+        return <path d={`M${a.x.toFixed(1)} ${a.y.toFixed(1)} L${b.x.toFixed(1)} ${b.y.toFixed(1)}`} class={major ? 'mc-tick-major' : 'mc-tick'} />;
+      })
+    }
+    <circle cx={CX} cy={CY} r="166" class="mc-orbit"></circle>
+
+    <!-- pointer: a gold arc on the bezel + a needle, turning once per cycle -->
+    <g class="mc-pointer" style={`transform-origin:${CX}px ${CY}px`}>
+      <path d={`M${arcA.x.toFixed(1)} ${arcA.y.toFixed(1)} A236 236 0 0 1 ${arcB.x.toFixed(1)} ${arcB.y.toFixed(1)}`} class="mc-arc"></path>
+      <path d={`M${CX} ${CY - 128} L${CX} ${CY - 166}`} class="mc-needle"></path>
+    </g>
+
+    <!-- service chips round the ring -->
+    {
+      services.map((s, i) => {
+        const p = at(R_CHIPS, angle(i));
+        return (
+          <g class:list={['mc-chip', i === 0 && 'is-first']} style={`--d:${delay(i)};transform-origin:${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`}>
+            <circle cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="23" class="mc-chip-bg" />
+            <circle cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="23" class="mc-chip-on" />
+            <s.Icon x={(p.x - 11).toFixed(1)} y={(p.y - 11).toFixed(1)} size={22} stroke-width={2} class="mc-chip-icon" />
+          </g>
+        );
+      })
+    }
+
+    <!-- centre disc with a MacBook -->
+    <circle cx={CX} cy={CY} r="128" fill="url(#mc-disc)" class="mc-disc"></circle>
+    <circle cx={CX} cy={CY} r="114" class="mc-inner"></circle>
+
+    <g class="mc-book">
+      <rect x={CX - 60} y={CY - 92} width="120" height="78" rx="7" class="mc-lid"></rect>
+      <rect x={CX - 52} y={CY - 85} width="104" height="62" rx="3" class="mc-screen"></rect>
+      <path d={`M${CX - 74} ${CY - 13} H${CX + 74} L${CX + 66} ${CY - 5} H${CX - 66} Z`} class="mc-base"></path>
+      <path d={`M${CX - 14} ${CY - 13} h28 v2.5 h-28 z`} class="mc-notch"></path>
+      {
+        services.map((s, i) => (
+          <g class:list={['mc-screen-icon', i === 0 && 'is-first']} style={`--d:${delay(i)};transform-origin:${CX}px ${CY - 54}px`}>
+            <s.Icon x={CX - 17} y={CY - 71} size={34} stroke-width={1.8} />
+          </g>
+        ))
+      }
+    </g>
+
+    <!-- service name, up to three lines -->
+    {
+      services.map((s, i) => (
+        <text x={CX} y={CY + 26} text-anchor="middle" class:list={['mc-name', i === 0 && 'is-first']} style={`--d:${delay(i)}`}>
+          {s.lines.map((line, k) => (
+            <tspan x={CX} dy={k === 0 ? 0 : 21}>{line}</tspan>
+          ))}
+        </text>
+      ))
+    }
+  </svg>
+
+  {
+    links.length > 0 && (
+      <ul class="mt-4 flex flex-wrap justify-center gap-2" role="list">
+        {links.map((s) => (
+          <li>
+            <a href={`#${s.id}`} class="inline-flex rounded-full bg-white/10 px-3.5 py-1.5 font-display text-xs font-bold text-white ring-1 ring-white/20 transition hover:bg-accent hover:text-ink hover:ring-accent sm:text-sm">
+              {s.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</div>
+
+<style>
+  .hero-mc .mc-bezel {
+    fill: color-mix(in oklab, var(--brand-primary), black 22%);
+    stroke: rgb(255 255 255 / 0.55);
+    stroke-width: 2;
+  }
+  .hero-mc .mc-tick {
+    stroke: rgb(255 255 255 / 0.22);
+    stroke-width: 1.4;
+  }
+  .hero-mc .mc-tick-major {
+    stroke: rgb(255 255 255 / 0.5);
+    stroke-width: 2;
+  }
+  .hero-mc .mc-orbit {
+    stroke: rgb(255 255 255 / 0.1);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 8;
+  }
+  .hero-mc .mc-arc {
+    stroke: var(--brand-accent);
+    stroke-width: 6;
+  }
+  .hero-mc .mc-needle {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+    stroke-dasharray: 2 6;
+  }
+  .hero-mc .mc-chip-bg {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 30%);
+    stroke: rgb(255 255 255 / 0.35);
+    stroke-width: 1.5;
+  }
+  .hero-mc .mc-chip-on {
+    fill: var(--brand-accent);
+    opacity: 0;
+  }
+  .hero-mc .mc-chip-icon {
+    color: rgb(255 255 255 / 0.75);
+  }
+  .hero-mc .mc-disc {
+    stroke: var(--brand-accent);
+    stroke-width: 2.5;
+  }
+  .hero-mc .mc-inner {
+    stroke: rgb(255 255 255 / 0.12);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 7;
+  }
+  .hero-mc .mc-lid {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 20%);
+    stroke: rgb(255 255 255 / 0.85);
+    stroke-width: 2;
+  }
+  .hero-mc .mc-screen {
+    fill: color-mix(in oklab, var(--brand-ink), black 20%);
+    stroke: color-mix(in oklab, var(--brand-accent), transparent 50%);
+    stroke-width: 1.2;
+  }
+  .hero-mc .mc-base {
+    fill: rgb(255 255 255 / 0.85);
+  }
+  .hero-mc .mc-notch {
+    fill: color-mix(in oklab, var(--brand-ink), transparent 40%);
+  }
+  .hero-mc .mc-screen-icon {
+    color: var(--brand-accent);
+    opacity: 0;
+  }
+  .hero-mc .mc-name {
+    font-family: 'Montserrat Variable', sans-serif;
+    font-weight: 800;
+    font-size: 19px;
+    fill: #fff;
+    opacity: 0;
+  }
+
+  /* ---- motion: the pointer goes round once per cycle; each service gets one step ---- */
+  .hero-mc .mc-pointer {
+    animation: mc-turn var(--cycle) linear infinite;
+  }
+  @keyframes mc-turn {
+    to { transform: rotate(360deg); }
+  }
+  .hero-mc .mc-chip,
+  .hero-mc .mc-chip-on,
+  .hero-mc .mc-chip-icon,
+  .hero-mc .mc-screen-icon,
+  .hero-mc .mc-name {
+    animation-duration: var(--cycle);
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+    animation-timing-function: ease-in-out;
+    animation-delay: var(--d);
+  }
+  .hero-mc .mc-chip { animation-name: mc-pop; }
+  .hero-mc .mc-chip-on { animation-name: mc-on; }
+  .hero-mc .mc-chip-icon { animation-name: mc-icon; }
+  .hero-mc .mc-screen-icon { animation-name: mc-show; }
+  .hero-mc .mc-name { animation-name: mc-show; }
+  /* the active service: chip turns gold and grows, its icon and name show in the middle
+     (keyframes mc-pop / mc-on / mc-icon / mc-show are built in the frontmatter) */
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-mc *,
+    .hero-mc .mc-pointer {
+      animation: none !important;
+    }
+    /* still picture: the first service is selected */
+    .hero-mc .is-first .mc-chip-on,
+    .hero-mc .mc-screen-icon.is-first,
+    .hero-mc .mc-name.is-first {
+      opacity: 1;
+    }
+    .hero-mc .is-first .mc-chip-icon {
+      color: var(--brand-ink);
+    }
+  }
+</style>
