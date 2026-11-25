@@ -1,0 +1,518 @@
+---
+// Services page (/services/). Same words as WordPress (split by src/lib/services.ts).
+// Laid out as: split-flap "service board" hero, then "Our Services" with colourful group tiles next
+// to the side call card, then a dark "parts cabinet" (search + group chips, one steel cabinet per
+// group, one pull-out drawer per service). Each drawer has an anchor id: links to empty WordPress
+// service pages land on their drawer here (Bilal's decision, see src/middleware.ts); it opens and flashes.
+// The group names (Repairs, Setup & installs...) are short UI labels only, used to filter.
+import ArrowRight from '@lucide/astro/icons/arrow-right';
+import Check from '@lucide/astro/icons/check';
+import FileText from '@lucide/astro/icons/file-text';
+import Globe from '@lucide/astro/icons/globe';
+import HeartHandshake from '@lucide/astro/icons/heart-handshake';
+import MonitorCog from '@lucide/astro/icons/monitor-cog';
+import Phone from '@lucide/astro/icons/phone';
+import Search from '@lucide/astro/icons/search';
+import ShieldCheck from '@lucide/astro/icons/shield-check';
+import Wrench from '@lucide/astro/icons/wrench';
+import CtaBand from '../CtaBand.astro';
+import HeroServiceBoard from '../HeroServiceBoard.astro';
+import SideCallCard from '../SideCallCard.astro';
+import { site } from '../../config/site';
+import { serviceIcon, serviceSearchWords } from '../../lib/service-icons';
+import { servicesSections } from '../../lib/services';
+
+interface Props {
+  heading: string; // the page's single H1 (same words as the WordPress page)
+  body: string; // raw exported markdown of the page
+}
+const { heading, body } = Astro.props;
+const p = await servicesSections(body);
+
+// Groups for the tiles and filter chips (first match wins; last one catches the rest)
+const groups = [
+  { key: 'repairs', label: 'Repairs', Icon: Wrench, re: /repair|troubleshoot|virus|replacement/i, tile: 'bg-primary text-white', chip: 'bg-primary text-white', arc: 'var(--brand-accent)' },
+  { key: 'setup', label: 'Setup & installs', Icon: MonitorCog, re: /setup|install|build|equipment/i, tile: 'bg-accent text-ink', chip: 'bg-accent text-ink', arc: 'var(--brand-primary)' },
+  { key: 'data', label: 'Data & security', Icon: ShieldCheck, re: /security|backup|recovery|family/i, tile: 'bg-cta text-white', chip: 'bg-cta text-white', arc: 'white' },
+  { key: 'web', label: 'Web & business', Icon: Globe, re: /website|seo|search engine|logo|hosting|domain|gsuite|server|sales/i, tile: 'bg-ink text-white', chip: 'bg-white text-ink', arc: 'var(--brand-accent)' },
+  { key: 'care', label: 'Care & advice', Icon: HeartHandshake, re: /./, tile: 'bg-primary-tint text-ink ring-1 ring-slate-200', chip: 'bg-primary-tint text-ink', arc: 'var(--brand-cta)' },
+] as const;
+const groupOf = (title: string) => groups.find((g) => g.re.test(title))!;
+
+const items = p.items.map((s, i) => {
+  const g = groupOf(s.title);
+  return {
+    ...s,
+    n: i + 1, // position in the WordPress list (same numbers as the hero board)
+    group: g,
+    Icon: serviceIcon(s.title),
+    tone: ['bg-primary text-white', 'bg-accent text-ink', 'bg-cta text-white'][i % 3],
+    text: `${s.title} ${s.html.replace(/<[^>]+>/g, '')} ${serviceSearchWords(s.title)}`.toLowerCase(),
+  };
+});
+const counts = groups.map((g) => ({ ...g, items: items.filter((s) => s.group.key === g.key) }));
+---
+
+<!-- Hero: blueprint grid + the split-flap service board -->
+<section class="relative isolate overflow-hidden bg-primary text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.09] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px] [mask-image:linear-gradient(to_right,transparent,black_45%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="pointer-events-none absolute -bottom-48 -left-40 -z-10 size-[34rem] rounded-full bg-white/[0.05] blur-3xl" aria-hidden="true"></div>
+  <div class="container-site grid grid-cols-1 items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 lg:py-16">
+    <div>
+      <h1 class="font-display text-[2.5rem] leading-[1.02] font-extrabold tracking-[-0.02em] text-white sm:text-6xl xl:text-[4.1rem]">
+        {heading}
+      </h1>
+      <p class="mt-6 max-w-xl text-xl text-white/85">Servicing {site.area}</p>
+      <ul class="mt-7 flex flex-wrap gap-2.5" role="list">
+        {
+          counts.map((g) => (
+            <li>
+              <a href="#finder" data-pick={g.key} class="inline-flex items-center gap-2 rounded-full bg-white/10 py-1.5 pr-3.5 pl-1.5 text-[15px] font-semibold text-white ring-1 ring-white/15 transition hover:bg-white hover:text-primary">
+                <span class="grid size-6 place-items-center rounded-full bg-accent text-ink">
+                  <Check size={13} stroke-width={3.5} aria-hidden="true" />
+                </span>
+                {g.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6 text-base sm:text-lg">
+          <Phone size={19} aria-hidden="true" /> Call {site.phone.display}
+        </a>
+        <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6 text-base sm:text-lg">
+          <FileText size={18} aria-hidden="true" /> Get a Quote
+        </a>
+      </div>
+    </div>
+    <div class="w-full pb-4">
+      <HeroServiceBoard names={items.map((s) => s.title)} />
+    </div>
+  </div>
+</section>
+
+<!-- Our Services: group tiles (mixed sizes) + the side call card -->
+<section class="section relative isolate overflow-hidden bg-white">
+  <!-- faint blue dots fading in from the right + a big outlined total behind the tiles -->
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-60 [background-image:radial-gradient(color-mix(in_oklab,var(--brand-primary),transparent_82%)_1.2px,transparent_1.2px)] [background-size:22px_22px] [mask-image:linear-gradient(to_left,black,transparent_70%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="container-site grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+    <div>
+      <div class="flex items-center gap-4">
+        {p.title && <h2 id={p.titleId} class="text-3xl font-extrabold text-primary sm:text-4xl">{p.title}</h2>}
+        <span class="grid h-9 min-w-9 -rotate-6 place-items-center rounded-lg bg-accent px-2 font-display text-base font-extrabold text-ink shadow-lift" aria-hidden="true">{items.length}</span>
+      </div>
+      <span class="mt-3 block h-1.5 w-20 rounded-full bg-[linear-gradient(90deg,var(--brand-primary)_0_33%,var(--brand-accent)_33%_66%,var(--brand-cta)_66%)]" aria-hidden="true"></span>
+      <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        {
+          counts.map((g, i) => {
+            const shown = i === 0 ? g.items.length : 3; // the tall Repairs tile lists all of its services
+            const share = g.items.length / items.length; // how much of the full list this group is
+            const C = 2 * Math.PI * 22;
+            return (
+              <a
+                href="#finder"
+                data-pick={g.key}
+                class:list={[
+                  'tile group relative isolate flex flex-col overflow-hidden rounded-3xl p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lift',
+                  g.tile,
+                  i === 0 ? 'sm:row-span-2 lg:col-span-3' : 'lg:col-span-3',
+                  i === 0 && 'min-h-72',
+                ]}
+              >
+                <!-- blueprint grid inside the tile, fading towards the bottom -->
+                <span class="pointer-events-none absolute inset-0 -z-10 opacity-[0.08] [background-image:linear-gradient(currentColor_1px,transparent_1px),linear-gradient(90deg,currentColor_1px,transparent_1px)] [background-size:24px_24px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" aria-hidden="true" />
+                <g.Icon size={i === 0 ? 220 : 130} stroke-width={1.2} class="tile-bg pointer-events-none absolute -right-8 -bottom-8 -z-10 opacity-[0.12]" aria-hidden="true" />
+                <span class="flex items-center justify-between gap-3">
+                  <span class="grid size-11 place-items-center rounded-xl bg-white/20 ring-1 ring-current/15">
+                    <g.Icon size={21} aria-hidden="true" />
+                  </span>
+                  <!-- count inside a ring gauge: the arc is this group's share of all services -->
+                  <span class="relative grid size-14 place-items-center">
+                    <svg viewBox="0 0 52 52" class="absolute inset-0 -rotate-90" aria-hidden="true">
+                      <circle cx="26" cy="26" r="22" fill="none" stroke="currentColor" stroke-opacity="0.18" stroke-width="4" />
+                      <circle class="tile-arc" cx="26" cy="26" r="22" fill="none" stroke-width="4" stroke-linecap="round" stroke-dasharray={C.toFixed(1)} stroke-dashoffset={(C * (1 - share)).toFixed(1)} style={`--c:${C.toFixed(1)};stroke:${g.arc}`} />
+                    </svg>
+                    <span class="font-display text-xl font-extrabold tabular-nums">{g.items.length}</span>
+                  </span>
+                </span>
+                <span class="mt-5 font-display text-xl font-extrabold">{g.label}</span>
+                <ul class="mt-3 space-y-1.5 text-[15px] opacity-90" role="list">
+                  {g.items.slice(0, shown).map((s) => (
+                    <li class="flex gap-2">
+                      <span class="mt-2 size-1.5 shrink-0 rounded-full bg-current opacity-60" />
+                      {s.title}
+                    </li>
+                  ))}
+                </ul>
+                {/* the tall tile's spare space: a little rack of its services' icons */}
+                {i === 0 && (
+                  <span class="mt-8 hidden flex-wrap gap-2 sm:flex" aria-hidden="true">
+                    {g.items.map((s, k) => (
+                      <span class="rack-chip grid size-10 place-items-center rounded-xl bg-white/12 ring-1 ring-white/15" style={`--d:${k * 60}ms`}>
+                        <s.Icon size={18} />
+                      </span>
+                    ))}
+                  </span>
+                )}
+                <span class="mt-auto flex items-center gap-2 pt-5">
+                  <span class="grid size-9 place-items-center rounded-full bg-white/20 ring-1 ring-current/15 transition duration-300 group-hover:translate-x-1 group-hover:bg-white group-hover:text-ink">
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </span>
+                  {g.items.length > shown && (
+                    <span class="rounded-full bg-white/20 px-2.5 py-1 font-display text-xs font-extrabold ring-1 ring-current/15">+{g.items.length - shown}</span>
+                  )}
+                </span>
+              </a>
+            );
+          })
+        }
+      </div>
+    </div>
+    <div class="lg:self-start">
+      <SideCallCard heading="Talk to a local technician" />
+    </div>
+  </div>
+</section>
+
+<!-- Dark blueprint "parts cabinet": one steel cabinet per group, one labelled drawer per service.
+     Click a drawer to pull it out: its tray holds the WordPress description and link.
+     Every heading, description and link is in the HTML (the drawers are <details>). -->
+<section id="finder" class="section relative isolate scroll-mt-24 overflow-hidden bg-ink text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="pointer-events-none absolute -top-40 right-0 -z-10 size-[30rem] rounded-full bg-primary/30 blur-3xl" aria-hidden="true"></div>
+  <div class="container-site" data-finder>
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Filter services">
+        <button type="button" data-chip="all" aria-pressed="true" class="chip inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 font-display text-sm font-bold ring-1 ring-white/15 transition">
+          All <span class="rounded-full bg-white/15 px-2 text-xs tabular-nums">{items.length}</span>
+        </button>
+        {
+          counts.map((g) => (
+            <button type="button" data-chip={g.key} aria-pressed="false" class="chip inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 font-display text-sm font-bold ring-1 ring-white/15 transition">
+              <span class:list={['grid size-5 place-items-center rounded-full', g.chip]}>
+                <g.Icon size={11} aria-hidden="true" />
+              </span>
+              {g.label}
+              <span class="rounded-full bg-white/15 px-2 text-xs tabular-nums">{g.items.length}</span>
+            </button>
+          ))
+        }
+      </div>
+      <label class="relative block w-full lg:max-w-xs">
+        <span class="sr-only">Search our services</span>
+        <Search size={18} class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-white/50" aria-hidden="true" />
+        <input
+          type="search"
+          data-search
+          placeholder="Search, e.g. virus, wifi, screen"
+          autocomplete="off"
+          class="h-12 w-full rounded-xl border-2 border-white/15 bg-white/[0.06] pr-4 pl-11 text-base text-white transition outline-none placeholder:text-white/45 focus:border-accent"
+        />
+      </label>
+    </div>
+    <p class="mt-4 text-sm font-semibold text-white/60" data-count aria-live="polite">{items.length} services</p>
+
+    <div class="mt-8 columns-1 gap-6 md:columns-2 xl:columns-3">
+      {
+        counts.map((g) => (
+          <div data-cabinet={g.key} class="mb-10 break-inside-avoid">
+            <div class="rounded-[1.6rem] bg-primary-deep p-2.5 shadow-panel ring-1 ring-white/10 sm:p-3">
+              <div class="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-3 py-2.5">
+                <span class="screw" aria-hidden="true" />
+                <span class:list={['grid size-9 shrink-0 place-items-center rounded-lg', g.chip]}>
+                  <g.Icon size={17} aria-hidden="true" />
+                </span>
+                <span class="font-display text-base font-extrabold text-white">{g.label}</span>
+                <span class="ml-auto rounded-md bg-ink px-2 py-0.5 font-display text-xs font-extrabold text-accent tabular-nums ring-1 ring-white/10">
+                  {String(g.items.length).padStart(2, '0')}
+                </span>
+                <span class="screw" aria-hidden="true" />
+              </div>
+              <div class="mt-2.5 space-y-2">
+                {g.items.map((s, k) => (
+                  <details id={s.id} name={`cabinet-${g.key}`} open={k === 0} data-card data-group={g.key} data-text={s.text} class="drawer scroll-mt-28">
+                    <summary class="drawer-front flex cursor-pointer items-center gap-3 rounded-xl py-2 pr-3 pl-2">
+                      <span class="w-7 shrink-0 text-center font-display text-xs font-extrabold text-accent tabular-nums">{String(s.n).padStart(2, '0')}</span>
+                      <span class="relative min-w-0 flex-1 rounded-md bg-white px-3.5 py-2 text-ink shadow-[inset_0_-2px_0_rgb(16_42_67/0.12)]">
+                        <span class="rivet left-1" aria-hidden="true" />
+                        <span class="rivet right-1" aria-hidden="true" />
+                        <h2 class="font-display text-[15px] leading-snug font-extrabold">{s.title}</h2>
+                      </span>
+                      <span class="handle" aria-hidden="true" />
+                    </summary>
+                    <div class="tray">
+                      <div class="flex items-start gap-3.5">
+                        <span class:list={['grid size-10 shrink-0 place-items-center rounded-xl', s.tone]}>
+                          <s.Icon size={19} aria-hidden="true" />
+                        </span>
+                        <div class="min-w-0">
+                          <p class="text-[15px] leading-relaxed text-slate-600" set:html={s.html} />
+                          <a href={s.href} class="group/l mt-3 inline-flex items-center gap-1.5 font-display text-sm font-extrabold text-primary hover:text-cta">
+                            {s.title}
+                            <ArrowRight size={15} class="transition group-hover/l:translate-x-0.5" aria-hidden="true" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+            <span class="flex justify-between px-8" aria-hidden="true">
+              <span class="h-2.5 w-10 rounded-b-md bg-white/15" />
+              <span class="h-2.5 w-10 rounded-b-md bg-white/15" />
+            </span>
+          </div>
+        ))
+      }
+    </div>
+    <div data-empty hidden class="rounded-2xl bg-white/[0.06] p-6 ring-1 ring-white/10">
+      <p class="text-white/80">No service matches that search. Call us and describe the problem.</p>
+      <a href={`tel:${site.phone.tel}`} class="btn-cta mt-4 min-h-13 px-6"><Phone size={18} aria-hidden="true" /> Call {site.phone.display}</a>
+    </div>
+  </div>
+</section>
+
+<CtaBand />
+
+<style>
+  /* group tiles: the big faint icon turns a little on hover; the gauge arc draws itself in */
+  .tile-bg {
+    transition: transform 0.5s ease;
+  }
+  .tile:hover .tile-bg {
+    transform: rotate(-10deg) scale(1.06);
+  }
+  .tile-arc {
+    animation: tile-arc 1.2s ease-out 0.2s backwards;
+  }
+  @keyframes tile-arc {
+    from {
+      stroke-dashoffset: var(--c);
+    }
+  }
+  /* icon rack: on hover the icons hop one after another, and the hovered one turns gold */
+  .tile:hover .rack-chip {
+    animation: rack-hop 0.5s ease var(--d) 1;
+  }
+  .rack-chip:hover {
+    background: var(--brand-accent);
+    color: var(--brand-ink);
+  }
+  @keyframes rack-hop {
+    40% {
+      transform: translateY(-5px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tile:hover .rack-chip {
+      animation: none;
+    }
+    .tile-arc {
+      animation: none;
+    }
+    .tile:hover .tile-bg {
+      transform: none;
+    }
+  }
+
+  .chip[aria-pressed='true'] {
+    background: var(--brand-accent);
+    color: var(--brand-ink);
+    --tw-ring-color: transparent;
+  }
+  .chip:not([aria-pressed='true']):hover {
+    background: rgb(255 255 255 / 0.18);
+  }
+
+  /* cabinet screws */
+  .screw {
+    position: relative;
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.22);
+    box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.35);
+  }
+  .screw::after {
+    content: '';
+    position: absolute;
+    inset: 4px 1px;
+    background: rgb(0 0 0 / 0.4);
+    rotate: 35deg;
+  }
+
+  /* drawer front: steel-blue panel with a bevel */
+  .drawer > summary {
+    list-style: none;
+  }
+  .drawer-front {
+    background: linear-gradient(180deg, color-mix(in oklab, var(--brand-primary), white 10%), var(--brand-primary));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.18),
+      inset 0 -2px 0 rgb(0 0 0 / 0.25),
+      0 3px 0 rgb(0 0 0 / 0.3);
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+  .drawer-front:hover {
+    transform: translateX(3px);
+  }
+  .drawer-front:focus-visible {
+    outline: 3px solid var(--brand-accent);
+    outline-offset: 2px;
+  }
+  .drawer[open] > .drawer-front {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.18),
+      inset 0 -2px 0 rgb(0 0 0 / 0.25),
+      0 0 0 2px var(--brand-accent);
+  }
+  /* label holder rivets */
+  .rivet {
+    position: absolute;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    margin-top: -2px;
+    border-radius: 9999px;
+    background: rgb(16 42 67 / 0.25);
+  }
+  /* pull handle */
+  .handle {
+    width: 30px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.35);
+    box-shadow: 0 2px 0 rgb(0 0 0 / 0.3);
+    transition:
+      background 0.25s ease,
+      transform 0.25s ease;
+  }
+  .drawer-front:hover .handle {
+    background: rgb(255 255 255 / 0.6);
+  }
+  .drawer[open] .handle {
+    background: var(--brand-accent);
+    transform: translateY(2px);
+  }
+
+  /* the pulled-out tray: a little narrower than the front, gold rim, dotted like a parts tray */
+  .tray {
+    margin: 0 0.6rem 0.35rem;
+    padding: 1.1rem 1rem;
+    border: 3px solid var(--brand-accent);
+    border-top: 0;
+    border-radius: 0 0 0.9rem 0.9rem;
+    background-color: white;
+    background-image: radial-gradient(color-mix(in oklab, var(--brand-primary), transparent 86%) 1px, transparent 1px);
+    background-size: 14px 14px;
+    box-shadow:
+      inset 0 10px 12px -10px rgb(16 42 67 / 0.45),
+      0 12px 24px -12px rgb(0 0 0 / 0.6);
+  }
+  .drawer[open] .tray {
+    animation: tray-out 0.35s ease-out;
+    transform-origin: top;
+  }
+  @keyframes tray-out {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scaleY(0.9);
+    }
+  }
+
+  /* the drawer a visitor was sent to (e.g. from /data-recovery/) flashes gold */
+  .drawer.is-landed > .drawer-front {
+    animation: drawer-land 0.9s ease-out 3;
+  }
+  @keyframes drawer-land {
+    50% {
+      box-shadow: 0 0 0 6px var(--brand-accent);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .drawer[open] .tray,
+    .drawer.is-landed > .drawer-front {
+      animation: none;
+    }
+    .drawer-front:hover {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-finder]');
+  if (root) {
+    const drawers = [...root.querySelectorAll<HTMLDetailsElement>('[data-card]')];
+    const cabinets = [...root.querySelectorAll<HTMLElement>('[data-cabinet]')];
+    const chips = [...root.querySelectorAll<HTMLButtonElement>('[data-chip]')];
+    const input = root.querySelector<HTMLInputElement>('[data-search]')!;
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    const empty = root.querySelector<HTMLElement>('[data-empty]')!;
+    let group = 'all';
+
+    const apply = () => {
+      const q = input.value.trim().toLowerCase();
+      let shown = 0;
+      for (const d of drawers) {
+        const hit = (group === 'all' || d.dataset.group === group) && (!q || q.split(/\s+/).every((w) => d.dataset.text!.includes(w)));
+        d.hidden = !hit;
+        if (hit) shown++;
+      }
+      // hide empty cabinets; while searching, pull out the first match in each cabinet
+      for (const c of cabinets) {
+        const visible = [...c.querySelectorAll<HTMLDetailsElement>('[data-card]')].filter((d) => !d.hidden);
+        c.hidden = visible.length === 0;
+        if (q && visible[0]) visible[0].open = true;
+      }
+      count.textContent = shown === drawers.length ? `${drawers.length} services` : `${shown} of ${drawers.length} services`;
+      empty.hidden = shown > 0;
+    };
+    const pick = (key: string) => {
+      group = key;
+      for (const ch of chips) ch.setAttribute('aria-pressed', String(ch.dataset.chip === key));
+      apply();
+    };
+    for (const ch of chips) ch.addEventListener('click', () => pick(ch.dataset.chip!));
+    input.addEventListener('input', apply);
+
+    // hero chips + group tiles: jump to the cabinets with that group selected
+    for (const a of document.querySelectorAll<HTMLAnchorElement>('[data-pick]')) {
+      a.addEventListener('click', () => pick(a.dataset.pick!));
+    }
+
+    // arriving at /services/#some-service: show everything, pull that drawer out and flash it
+    const land = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      const d = id ? drawers.find((x) => x.id === id) : undefined;
+      if (!d) return;
+      input.value = '';
+      pick('all');
+      drawers.forEach((x) => x.classList.remove('is-landed'));
+      d.open = true;
+      d.classList.add('is-landed');
+      d.scrollIntoView({ block: 'center' });
+    };
+    land();
+    addEventListener('hashchange', land);
+  }
+</script>

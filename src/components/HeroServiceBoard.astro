@@ -1,0 +1,172 @@
+---
+/**
+ * Services page hero: a wall-mounted split-flap "service board" (like an airport departures board).
+ * Each row shows a service name from the WordPress Services list; every couple of seconds one row
+ * flips to the next service, so the board cycles through all of them. Row numbers are just the
+ * service's position in the list. No logos, no made-up facts.
+ * Reduced motion: the board stays still and shows the first services.
+ */
+import { serviceIcon } from '../lib/service-icons';
+
+interface Props {
+  names: string[]; // service names, in WordPress order
+}
+const { names } = Astro.props;
+const ROWS = 6;
+const first = names.slice(0, ROWS);
+const tones = ['bg-primary text-white', 'bg-accent text-ink', 'bg-cta text-white'];
+---
+
+<div class="sb relative mx-auto w-full max-w-[580px]" data-service-board data-names={JSON.stringify(names)}>
+  <!-- mounting: two cables from the ceiling + bracket -->
+  <svg viewBox="0 0 580 56" class="block h-auto w-full" fill="none" stroke-linecap="round" aria-hidden="true">
+    <path d="M120 0 V40 M460 0 V40" stroke="white" stroke-opacity="0.45" stroke-width="2" />
+    <path d="M100 40 h40 M440 40 h40" stroke="var(--brand-accent)" stroke-width="4" />
+    <circle cx="120" cy="48" r="6" fill="var(--brand-accent)" />
+    <circle cx="460" cy="48" r="6" fill="var(--brand-accent)" />
+  </svg>
+
+  <div class="sb-frame relative -mt-2 rounded-3xl bg-ink p-3 shadow-panel ring-2 ring-accent/70 sm:p-4">
+    <!-- header strip -->
+    <div class="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3">
+      <span class="sb-live relative size-2.5 rounded-full bg-accent" aria-hidden="true"></span>
+      <span class="font-display text-[13px] font-extrabold tracking-[0.18em] text-white uppercase">Now serving</span>
+      <span class="ml-auto flex gap-1.5" aria-hidden="true">
+        <span class="size-2.5 rounded-full bg-cta"></span>
+        <span class="size-2.5 rounded-full bg-accent"></span>
+        <span class="size-2.5 rounded-full bg-white/40"></span>
+      </span>
+    </div>
+
+    <!-- rows (decorative: the real list with links is further down the page) -->
+    <ol class="mt-3 space-y-2" aria-hidden="true">
+      {
+        first.map((name, i) => {
+          const Icon = serviceIcon(name);
+          return (
+            <li class="flex items-center gap-3 rounded-xl bg-white/[0.04] p-2 ring-1 ring-white/[0.06]" data-row>
+              <span class="w-8 shrink-0 text-center font-display text-sm font-extrabold text-accent tabular-nums" data-num>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span class:list={['grid size-9 shrink-0 place-items-center rounded-lg', tones[i % 3]]} data-icon>
+                <Icon size={17} />
+              </span>
+              <span class="sb-flap relative min-w-0 flex-1 overflow-hidden rounded-md bg-primary-deep px-3 py-2">
+                <span class="block truncate font-display text-[15px] font-bold text-white sm:text-base" data-name>{name}</span>
+                <span class="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-black/40"></span>
+              </span>
+            </li>
+          );
+        })
+      }
+    </ol>
+
+    <!-- footer: progress through the list -->
+    <div class="mt-3 flex items-center gap-3 px-2 pb-1">
+      <span class="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+        <span class="sb-progress block h-full rounded-full bg-accent" style={`width:${(ROWS / names.length) * 100}%`} data-progress></span>
+      </span>
+      <span class="font-display text-xs font-bold text-white/60 tabular-nums" data-total>{names.length}</span>
+    </div>
+  </div>
+
+  <!-- every service's icon, ready for the rows to swap in as they flip -->
+  {
+    names.map((name, i) => {
+      const Icon = serviceIcon(name);
+      return (
+        <template data-icon-for={i}>
+          <Icon size={17} />
+        </template>
+      );
+    })
+  }
+
+  <!-- floating gold ticket tag -->
+  <span class="sb-tag absolute -right-2 -bottom-4 rotate-6 rounded-lg bg-accent px-3 py-2 font-display text-sm font-extrabold text-ink shadow-lift sm:-right-4" aria-hidden="true">
+    01 → {String(names.length).padStart(2, '0')}
+  </span>
+</div>
+
+<style>
+  .sb-live::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--brand-accent), transparent 30%);
+    animation: sb-ping 1.8s ease-out infinite;
+  }
+  @keyframes sb-ping {
+    to {
+      box-shadow: 0 0 0 10px color-mix(in oklab, var(--brand-accent), transparent 100%);
+    }
+  }
+  .sb-flap.is-flipping [data-name] {
+    animation: sb-flip 0.45s ease-out;
+    transform-origin: 50% 50%;
+  }
+  @keyframes sb-flip {
+    0% {
+      transform: perspective(300px) rotateX(-90deg);
+      opacity: 0.2;
+    }
+    100% {
+      transform: perspective(300px) rotateX(0);
+      opacity: 1;
+    }
+  }
+  .sb-progress {
+    transition: width 0.5s ease;
+  }
+  .sb-tag {
+    animation: sb-sway 4s ease-in-out infinite;
+  }
+  @keyframes sb-sway {
+    50% {
+      rotate: -3deg;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sb-live::after,
+    .sb-tag,
+    .sb-flap.is-flipping [data-name] {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  for (const board of document.querySelectorAll<HTMLElement>('[data-service-board]')) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) continue;
+    const names: string[] = JSON.parse(board.dataset.names ?? '[]');
+    const rows = [...board.querySelectorAll<HTMLElement>('[data-row]')];
+    const progress = board.querySelector<HTMLElement>('[data-progress]');
+    if (names.length <= rows.length) continue;
+    let next = rows.length; // index of the next service to show
+    let row = 0;
+    const tick = () => {
+      const r = rows[row];
+      const flap = r.querySelector<HTMLElement>('.sb-flap')!;
+      r.querySelector('[data-name]')!.textContent = names[next];
+      r.querySelector('[data-num]')!.textContent = String(next + 1).padStart(2, '0');
+      const icon = r.querySelector<HTMLElement>('[data-icon]');
+      const tpl = board.querySelector<HTMLTemplateElement>(`template[data-icon-for="${next}"]`);
+      if (icon && tpl) icon.replaceChildren(tpl.content.cloneNode(true));
+      flap.classList.remove('is-flipping');
+      void flap.offsetWidth; // restart the animation
+      flap.classList.add('is-flipping');
+      if (progress) progress.style.width = `${((next + 1) / names.length) * 100}%`;
+      next = (next + 1) % names.length;
+      row = (row + 1) % rows.length;
+    };
+    let timer = 0;
+    const start = () => (timer ||= window.setInterval(tick, 1700));
+    const stop = () => {
+      clearInterval(timer);
+      timer = 0;
+    };
+    // only run while the board is on screen
+    new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop())).observe(board);
+  }
+</script>
