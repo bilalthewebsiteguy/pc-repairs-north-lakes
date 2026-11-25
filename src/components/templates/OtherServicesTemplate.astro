@@ -1,0 +1,438 @@
+---
+// Other Services page (/other-services/). Same words and links as WordPress (split by src/lib/otherservices.ts).
+// Laid out as: network-diagram hero, the intro + the WordPress list of 4 services next to the side call card,
+// then a dark "patch panel": one network port per service; plugging a cable into a port shows that
+// service's text (all 4 are in the HTML; without JS they all show). Then Areas We Serve.
+// The Mac text keeps its WordPress link exactly as exported (/?p=526 = the Mac Repair Services page).
+import ArrowRight from '@lucide/astro/icons/arrow-right';
+import Check from '@lucide/astro/icons/check';
+import FileText from '@lucide/astro/icons/file-text';
+import Globe from '@lucide/astro/icons/globe';
+import Laptop from '@lucide/astro/icons/laptop';
+import MapPin from '@lucide/astro/icons/map-pin';
+import Network from '@lucide/astro/icons/network';
+import Phone from '@lucide/astro/icons/phone';
+import Router from '@lucide/astro/icons/router';
+import Wrench from '@lucide/astro/icons/wrench';
+import CtaBand from '../CtaBand.astro';
+import HeroNetwork from '../HeroNetwork.astro';
+import SideCallCard from '../SideCallCard.astro';
+import { site } from '../../config/site';
+import { otherServicesSections } from '../../lib/otherservices';
+
+interface Props {
+  heading: string; // the page's single H1 (same words as the WordPress page)
+  body: string; // raw exported markdown of the page
+}
+const { heading, body } = Astro.props;
+const p = await otherServicesSections(body);
+
+// Quick facts for the hero, quoted word for word from the page text (dropped if not found)
+const facts = ['not more than $99 an hour', 'experienced and certified', 'fast and reliable fix'].filter((f) => p.restText.includes(f));
+
+const iconFor = (name: string) =>
+  /mac/i.test(name) ? Laptop : /internet/i.test(name) ? Globe : /installation/i.test(name) ? Network : /troubleshoot/i.test(name) ? Router : Wrench;
+const tones = ['bg-primary text-white', 'bg-accent text-ink', 'bg-cta text-white', 'bg-white text-ink'];
+const services = p.services.map((s, i) => ({ ...s, Icon: iconFor(s.name), tone: tones[i % tones.length], n: String(i + 1).padStart(2, '0') }));
+
+const linkStyle =
+  '[&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:decoration-accent [&_a]:decoration-2 [&_a]:underline-offset-4';
+---
+
+<!-- Hero: blueprint grid + the network diagram -->
+<section class="relative isolate overflow-hidden bg-primary text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.09] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px] [mask-image:linear-gradient(to_right,transparent,black_45%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="pointer-events-none absolute -bottom-48 -left-40 -z-10 size-[34rem] rounded-full bg-white/[0.05] blur-3xl" aria-hidden="true"></div>
+  <div class="container-site grid grid-cols-1 items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 lg:py-16">
+    <div>
+      <h1 class="font-display text-[2.5rem] leading-[1.02] font-extrabold tracking-[-0.02em] text-white sm:text-6xl xl:text-[4.1rem]">
+        {heading}
+      </h1>
+      <p class="mt-6 max-w-xl text-xl text-white/85">Servicing {site.area}</p>
+      {
+        facts.length > 0 && (
+          <ul class="mt-7 space-y-2.5" role="list">
+            {facts.map((f) => (
+              <li class="flex items-center gap-3 text-lg text-white/90">
+                <span class="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-ink">
+                  <Check size={14} stroke-width={3.5} aria-hidden="true" />
+                </span>
+                <span class="first-letter:uppercase">{f}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6 text-base sm:text-lg">
+          <Phone size={19} aria-hidden="true" /> Call {site.phone.display}
+        </a>
+        <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6 text-base sm:text-lg">
+          <FileText size={18} aria-hidden="true" /> Get a Quote
+        </a>
+      </div>
+    </div>
+    <div class="w-full">
+      <HeroNetwork />
+    </div>
+  </div>
+</section>
+
+<!-- Intro + the WordPress list of services, next to the side call card -->
+<section class="section relative isolate overflow-hidden bg-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-60 [background-image:radial-gradient(color-mix(in_oklab,var(--brand-primary),transparent_82%)_1.2px,transparent_1.2px)] [background-size:22px_22px] [mask-image:linear-gradient(to_left,black,transparent_70%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="container-site grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+    <div>
+      <div class="relative pl-6">
+        <span class="absolute top-1 bottom-1 left-0 w-1.5 rounded-full bg-accent" aria-hidden="true"></span>
+        <div class:list={['space-y-5 text-lg leading-relaxed text-slate-700 [&>p:first-child]:text-xl [&>p:first-child]:leading-relaxed [&>p:first-child]:font-semibold [&>p:first-child]:text-ink', linkStyle]} set:html={p.introHtml} />
+      </div>
+
+      <!-- the WordPress list, as port tiles that open the matching port below -->
+      <ul class="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2" role="list">
+        {
+          services.length > 0
+            ? services.map((s, i) => (
+                <li>
+                  <a href={`#${s.id}`} data-port-pick={i} class="group flex items-center gap-4 rounded-2xl bg-white p-4 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift hover:ring-primary/40">
+                    <span class:list={['grid size-12 shrink-0 place-items-center rounded-xl', s.tone === 'bg-white text-ink' ? 'bg-ink text-white' : s.tone]}>
+                      <s.Icon size={22} aria-hidden="true" />
+                    </span>
+                    <span class="min-w-0 flex-1 font-display text-[17px] leading-snug font-extrabold text-ink">{s.name}</span>
+                    <span class="font-display text-xs font-extrabold text-slate-400 tabular-nums">{s.n}</span>
+                    <ArrowRight size={17} class="shrink-0 text-cta transition group-hover:translate-x-1" aria-hidden="true" />
+                  </a>
+                </li>
+              ))
+            : p.names.map((n) => <li class="rounded-2xl bg-primary-tint p-4 font-display font-extrabold text-ink">{n}</li>)
+        }
+      </ul>
+    </div>
+    <div class="lg:self-start">
+      <SideCallCard heading="Talk to a local technician" />
+    </div>
+  </div>
+</section>
+
+<!-- Dark "patch panel": one port per service -->
+{
+  services.length > 0 ? (
+    <section id="panel" class="section relative isolate scroll-mt-24 overflow-hidden bg-ink text-white">
+      <div
+        class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px]"
+        aria-hidden="true"
+      />
+      <div class="pointer-events-none absolute -top-40 right-0 -z-10 size-[30rem] rounded-full bg-primary/30 blur-3xl" aria-hidden="true" />
+      <div class="container-site" data-patch>
+        <!-- the rack unit -->
+        <div class="rack relative rounded-3xl bg-primary-deep p-3 shadow-panel ring-1 ring-white/10 sm:p-4">
+          <span class="rack-ear left-3" aria-hidden="true" />
+          <span class="rack-ear right-3" aria-hidden="true" />
+          <div class="grid grid-cols-2 gap-3 px-6 sm:px-8 lg:grid-cols-4" role="tablist" aria-label={p.names.join(', ')}>
+            {services.map((s, i) => (
+              <button
+                type="button"
+                role="tab"
+                id={`port-${s.id}`}
+                aria-controls={s.id}
+                aria-selected={i === 0 ? 'true' : 'false'}
+                tabindex={i === 0 ? 0 : -1}
+                data-port={i}
+                class="port group flex flex-col items-center gap-3 rounded-2xl bg-white/[0.04] px-3 pt-4 pb-3 text-center ring-1 ring-white/10 transition hover:bg-white/[0.08]"
+              >
+                <span class="flex w-full items-center justify-between px-1" aria-hidden="true">
+                  <span class="font-display text-xs font-extrabold text-white/50 tabular-nums">{s.n}</span>
+                  <span class="led" />
+                </span>
+                <span class="socket" aria-hidden="true">
+                  <span class="socket-pins" />
+                  <span class="plug" />
+                </span>
+                <span class="font-display text-sm leading-tight font-extrabold text-white sm:text-[15px]">{s.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <!-- the cable from the panel down to the open service -->
+        <div class="relative h-12" aria-hidden="true">
+          <span class="cable absolute top-0 bottom-0 w-1.5 rounded-full bg-accent" data-cable />
+        </div>
+
+        {services.map((s, i) => (
+          <article id={s.id} role="tabpanel" aria-labelledby={`port-${s.id}`} data-panel={i} class="scroll-mt-28 overflow-hidden rounded-3xl bg-white text-ink shadow-panel ring-1 ring-white/10">
+            <div class="grid grid-cols-1 lg:grid-cols-[310px_minmax(0,1fr)]">
+              <div class:list={['relative isolate flex min-w-0 flex-col justify-between gap-6 overflow-hidden p-7', s.tone === 'bg-white text-ink' ? 'bg-primary text-white' : s.tone]}>
+                <s.Icon size={180} stroke-width={1} class="pointer-events-none absolute -right-10 -bottom-10 -z-10 opacity-[0.13]" aria-hidden="true" />
+                <span class="grid size-14 place-items-center rounded-2xl bg-white/20 ring-1 ring-current/15">
+                  <s.Icon size={26} aria-hidden="true" />
+                </span>
+                <div>
+                  <span class="font-display text-sm font-extrabold opacity-70 tabular-nums">{s.n} / {String(services.length).padStart(2, '0')}</span>
+                  <h3 class="mt-1 font-display text-2xl leading-tight font-extrabold text-current [overflow-wrap:anywhere] sm:text-3xl lg:text-[1.6rem]">{s.name}</h3>
+                </div>
+              </div>
+              <div class="p-7 sm:p-9">
+                {s.reasons.length === 3 ? (
+                  <div class:list={['space-y-5 text-[17px] leading-relaxed text-slate-700', linkStyle]}>
+                    <div class="space-y-5" set:html={s.introHtml} />
+                    <ol class="grid grid-cols-1 gap-3 sm:grid-cols-3" role="list">
+                      {s.reasons.map((r, k) => (
+                        <li class="relative rounded-2xl bg-primary-tint p-4 pt-10 ring-1 ring-slate-200">
+                          <span class:list={['absolute top-3 left-4 grid h-7 min-w-7 place-items-center rounded-full px-1.5 font-display text-sm font-extrabold', ['bg-primary text-white', 'bg-accent text-ink', 'bg-cta text-white'][k]]}>
+                            ({k + 1})
+                          </span>
+                          <span class="font-semibold text-ink">{r}</span>
+                          {k === 1 && <span class="sr-only"> or</span>}
+                        </li>
+                      ))}
+                    </ol>
+                    {s.outroHtml && <div class="space-y-5" set:html={s.outroHtml} />}
+                  </div>
+                ) : (
+                  <div class:list={['space-y-5 text-[17px] leading-relaxed text-slate-700 [&>p:first-child]:font-display [&>p:first-child]:text-lg [&>p:first-child]:leading-snug [&>p:first-child]:font-bold [&>p:first-child]:text-ink', linkStyle]} set:html={s.html} />
+                )}
+                <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+                  <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6">
+                    <Phone size={18} aria-hidden="true" /> Call {site.phone.display}
+                  </a>
+                  <a href={site.quoteUrl} class="btn-outline min-h-13 px-6">
+                    <FileText size={18} aria-hidden="true" /> Get a Quote
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  ) : (
+    <section class="section bg-white">
+      <div class:list={['container-site max-w-3xl space-y-5 text-lg leading-relaxed text-slate-700', linkStyle]} set:html={p.restHtml} />
+    </section>
+  )
+}
+
+<!-- Areas we serve: two boxes of suburb pills -->
+{
+  p.areas.length > 0 && (
+    <section class="section bg-primary-tint">
+      <div class="container-site">
+        <h2 id={p.areasId} class="text-3xl font-extrabold text-primary sm:text-4xl">{p.areasTitle}</h2>
+        <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {p.areas.map((g) => (
+            <div class="rounded-2xl bg-white p-6 ring-1 ring-slate-200 sm:p-7">
+              <h3 class="flex items-center gap-2 text-lg font-bold">
+                <MapPin size={18} class="text-cta" aria-hidden="true" /> {g.title}
+              </h3>
+              <ul class="mt-4 flex flex-wrap gap-2">
+                {g.links.map((l) => (
+                  <li>
+                    <a
+                      href={l.href}
+                      class:list={[
+                        'block rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 transition hover:bg-primary hover:text-white hover:ring-primary',
+                        /computer-repairs-north-lakes\/?$/.test(l.href) ? 'bg-accent text-ink ring-accent' : 'bg-primary-tint text-ink ring-slate-200',
+                      ]}
+                    >
+                      {l.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<CtaBand />
+
+<style>
+  /* rack-mount ears with screw holes */
+  .rack-ear {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 34px;
+    margin-top: -17px;
+    border-radius: 9999px;
+    background: rgb(0 0 0 / 0.35);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+  }
+  /* port LED */
+  .led {
+    width: 9px;
+    height: 9px;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.2);
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .port[aria-selected='true'] .led {
+    background: var(--brand-accent);
+    box-shadow: 0 0 10px 2px color-mix(in oklab, var(--brand-accent), transparent 40%);
+    animation: led-blink 1.4s steps(2) infinite;
+  }
+  @keyframes led-blink {
+    50% {
+      opacity: 0.45;
+    }
+  }
+  .port[aria-selected='true'] {
+    background: rgb(255 255 255 / 0.1);
+    --tw-ring-color: var(--brand-accent);
+    box-shadow: 0 0 0 2px var(--brand-accent);
+  }
+  .port:focus-visible {
+    outline: 3px solid var(--brand-accent);
+    outline-offset: 3px;
+  }
+  /* RJ45-style socket */
+  .socket {
+    position: relative;
+    width: 58px;
+    height: 46px;
+    border-radius: 6px;
+    background: var(--brand-ink);
+    box-shadow: inset 0 3px 8px rgb(0 0 0 / 0.6), 0 0 0 3px rgb(255 255 255 / 0.12);
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 72%, 72% 100%, 28% 100%, 28% 72%, 0 72%);
+  }
+  .socket-pins {
+    position: absolute;
+    top: 6px;
+    left: 9px;
+    right: 9px;
+    height: 8px;
+    background: repeating-linear-gradient(90deg, var(--brand-accent) 0 3px, transparent 3px 5px);
+    opacity: 0.8;
+  }
+  /* the plug slides in when the port is chosen */
+  .plug {
+    position: absolute;
+    inset: 4px 6px 0;
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(180deg, color-mix(in oklab, var(--brand-accent), white 30%), var(--brand-accent));
+    transform: translateY(110%);
+    transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+  }
+  .port[aria-selected='true'] .plug {
+    transform: translateY(18%);
+  }
+  .port:not([aria-selected='true']):hover .plug {
+    transform: translateY(80%);
+  }
+  /* cable: drawn down from the active port */
+  .cable {
+    left: var(--cable-x, 12.5%);
+    transform: translateX(-50%);
+    transition: left 0.4s ease;
+  }
+  .cable::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    border-radius: 9999px;
+    background: white;
+    box-shadow: 0 0 0 3px var(--brand-accent);
+    animation: cable-packet 1.2s linear infinite;
+  }
+  @keyframes cable-packet {
+    from {
+      top: -6px;
+    }
+    to {
+      top: calc(100% - 4px);
+    }
+  }
+  [data-panel]:not([hidden]) {
+    animation: panel-in 0.35s ease-out both;
+  }
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .port[aria-selected='true'] .led,
+    .cable::after,
+    [data-panel] {
+      animation: none;
+    }
+    .plug,
+    .cable {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-patch]');
+  if (root) {
+    const ports = [...root.querySelectorAll<HTMLButtonElement>('[data-port]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')];
+    const cable = root.querySelector<HTMLElement>('[data-cable]');
+
+    const place = (i: number) => {
+      // line the cable up under the chosen port
+      if (!cable) return;
+      const port = ports[i].getBoundingClientRect();
+      const box = cable.parentElement!.getBoundingClientRect();
+      cable.style.setProperty('--cable-x', `${port.left + port.width / 2 - box.left}px`);
+    };
+    const select = (i: number, focus = false) => {
+      ports.forEach((p, k) => {
+        p.setAttribute('aria-selected', String(k === i));
+        p.tabIndex = k === i ? 0 : -1;
+      });
+      panels.forEach((el, k) => (el.hidden = k !== i));
+      place(i);
+      if (focus) ports[i].focus();
+    };
+    let current = 0;
+    ports.forEach((p, i) => {
+      p.addEventListener('click', () => select((current = i)));
+      p.addEventListener('keydown', (e) => {
+        const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!step) return;
+        e.preventDefault();
+        current = (current + step + ports.length) % ports.length;
+        select(current, true);
+      });
+    });
+    addEventListener('resize', () => place(current));
+
+    // list tiles above + /other-services/#network-installation: open that port
+    const open = (id: string) => {
+      const i = panels.findIndex((el) => el.id === id);
+      if (i >= 0) select((current = i));
+      return i >= 0;
+    };
+    for (const a of document.querySelectorAll<HTMLAnchorElement>('[data-port-pick]')) {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        open(a.hash.slice(1));
+        root.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+        history.replaceState(null, '', a.hash);
+      });
+    }
+    if (!open(decodeURIComponent(location.hash.slice(1)))) select(0);
+  }
+</script>

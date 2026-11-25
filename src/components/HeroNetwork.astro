@@ -1,0 +1,267 @@
+---
+/**
+ * Other Services hero: a home/office network diagram drawn as a blueprint. A router in the middle is
+ * linked to the internet (cloud) and four devices (iMac-style screen, laptop, printer, desktop).
+ * Data packets travel the cables. On a loop, one cable drops out (orange, dashed, warning),
+ * a gold scan ring checks it, then it comes back fixed (gold, tick). No logos.
+ * Reduced motion: everything shows in its "fixed" state, no packets.
+ */
+---
+
+<div class="net relative mx-auto w-full max-w-[580px]">
+  <div class="overflow-hidden rounded-3xl bg-ink/45 ring-1 ring-white/15 shadow-panel">
+    <svg viewBox="0 0 560 440" class="block h-auto w-full" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <defs>
+        <pattern id="net-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+          <path d="M28 0H0V28" stroke="white" stroke-opacity="0.07"></path>
+        </pattern>
+        <radialGradient id="net-glow" cx="50%" cy="52%" r="45%">
+          <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0.16"></stop>
+          <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+        </radialGradient>
+      </defs>
+      <rect width="560" height="440" fill="url(#net-grid)"></rect>
+      <rect width="560" height="440" fill="url(#net-glow)"></rect>
+
+      <!-- cables (router at 280,236) -->
+      <path id="c-cloud" d="M280 206 V112" class="net-cable"></path>
+      <path id="c-tl" d="M246 236 H160 V150" class="net-cable"></path>
+      <path id="c-tr" d="M314 236 H400 V150" class="net-cable"></path>
+      <path id="c-bl" d="M246 246 H160 V318" class="net-cable"></path>
+      <!-- the cable that drops out and gets fixed -->
+      <path d="M314 246 H400 V318" class="net-cable net-broken" stroke-dasharray="6 9"></path>
+      <path id="c-br" d="M314 246 H400 V318" class="net-cable net-fixed"></path>
+
+      <!-- packets -->
+      <circle r="5" class="net-packet"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#c-cloud"></mpath></animateMotion></circle>
+      <circle r="5" class="net-packet"><animateMotion dur="2.8s" begin="0.4s" repeatCount="indefinite"><mpath href="#c-tl"></mpath></animateMotion></circle>
+      <circle r="5" class="net-packet"><animateMotion dur="2.6s" begin="1s" repeatCount="indefinite"><mpath href="#c-tr"></mpath></animateMotion></circle>
+      <circle r="5" class="net-packet"><animateMotion dur="3s" begin="0.7s" repeatCount="indefinite"><mpath href="#c-bl"></mpath></animateMotion></circle>
+      <g class="net-fixed"><circle r="5" class="net-packet"><animateMotion dur="2.5s" repeatCount="indefinite"><mpath href="#c-br"></mpath></animateMotion></circle></g>
+
+      <!-- internet cloud -->
+      <g>
+        <path d="M232 106 a22 22 0 0 1 6 -43 a30 30 0 0 1 56 -10 a24 24 0 0 1 30 26 a18 18 0 0 1 -4 35 z" class="net-dev"></path>
+        <path d="M262 82 h36 M270 92 h20" class="net-gold-line"></path>
+      </g>
+
+      <!-- router -->
+      <g>
+        <rect x="236" y="214" width="88" height="44" rx="10" class="net-dev"></rect>
+        <path d="M256 214 V186 M304 214 V186" class="net-line"></path>
+        <circle cx="256" cy="184" r="3" class="net-gold"></circle>
+        <circle cx="304" cy="184" r="3" class="net-gold"></circle>
+        <circle cx="254" cy="236" r="3.5" class="net-led"></circle>
+        <circle cx="266" cy="236" r="3.5" class="net-led net-led--2"></circle>
+        <circle cx="278" cy="236" r="3.5" class="net-led net-led--3"></circle>
+        <path d="M292 236 h20" class="net-line"></path>
+        <!-- wifi waves -->
+        <path d="M262 168 a26 26 0 0 1 36 0" class="net-wave"></path>
+        <path d="M252 158 a40 40 0 0 1 56 0" class="net-wave net-wave--2"></path>
+      </g>
+
+      <!-- iMac-style screen (top left) -->
+      <g>
+        <rect x="104" y="96" width="112" height="72" rx="8" class="net-dev"></rect>
+        <rect x="114" y="106" width="92" height="46" rx="3" class="net-screen"></rect>
+        <path d="M150 168 l-6 18 h32 l-6 -18" class="net-line"></path>
+        <path d="M124 120 h40 M124 130 h56 M124 140 h30" class="net-gold-line net-thin"></path>
+      </g>
+      <!-- laptop (top right) -->
+      <g>
+        <rect x="352" y="100" width="96" height="62" rx="6" class="net-dev"></rect>
+        <rect x="360" y="108" width="80" height="46" rx="2" class="net-screen"></rect>
+        <path d="M338 166 h124 l-8 10 h-108 z" class="net-dev"></path>
+        <path d="M372 124 l12 12 l24 -24" class="net-gold-line"></path>
+      </g>
+      <!-- printer (bottom left) -->
+      <g>
+        <rect x="112" y="318" width="96" height="52" rx="8" class="net-dev"></rect>
+        <path d="M128 318 v-18 h64 v18" class="net-line"></path>
+        <path d="M130 370 v18 h60 v-18" class="net-dev"></path>
+        <path d="M140 378 h40" class="net-gold-line net-thin"></path>
+        <circle cx="192" cy="334" r="3.5" class="net-led"></circle>
+      </g>
+      <!-- desktop: monitor + tower (bottom right) -->
+      <g>
+        <rect x="352" y="318" width="82" height="56" rx="6" class="net-dev"></rect>
+        <rect x="360" y="326" width="66" height="38" rx="2" class="net-screen"></rect>
+        <path d="M384 374 v10 h18 v-10" class="net-line"></path>
+        <rect x="444" y="314" width="34" height="74" rx="6" class="net-dev"></rect>
+        <path d="M452 326 h18 M452 334 h18" class="net-line net-thin"></path>
+        <circle cx="461" cy="370" r="4" class="net-gold"></circle>
+      </g>
+
+      <!-- trouble -> scan -> fixed, on the bottom-right cable -->
+      <g class="net-broken">
+        <circle cx="400" cy="282" r="14" class="net-warn"></circle>
+        <path d="M400 274 v9 M400 289 v0.5" stroke="white" stroke-width="3"></path>
+      </g>
+      <circle cx="400" cy="282" r="16" class="net-scan"></circle>
+      <g class="net-fixed">
+        <circle cx="400" cy="282" r="14" class="net-ok"></circle>
+        <path d="M393 282 l5 5 l9 -10" stroke="var(--brand-ink)" stroke-width="3"></path>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<style>
+  .net-dev {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 35%);
+    stroke: white;
+    stroke-width: 2.5;
+  }
+  .net-screen {
+    fill: var(--brand-ink);
+    stroke: white;
+    stroke-opacity: 0.35;
+    stroke-width: 1.5;
+  }
+  .net-line {
+    stroke: white;
+    stroke-width: 2.5;
+  }
+  .net-thin {
+    stroke-width: 2;
+  }
+  .net-gold-line {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .net-gold {
+    fill: var(--brand-accent);
+  }
+  .net-cable {
+    stroke: var(--brand-accent);
+    stroke-width: 5;
+    stroke-opacity: 0.85;
+  }
+  .net-broken.net-cable {
+    stroke: var(--brand-cta);
+  }
+  .net-packet {
+    fill: white;
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .net-led {
+    fill: var(--brand-accent);
+    animation: net-blink 1.2s steps(2) infinite;
+  }
+  .net-led--2 {
+    animation-delay: 0.3s;
+  }
+  .net-led--3 {
+    animation-delay: 0.6s;
+  }
+  @keyframes net-blink {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  .net-wave {
+    stroke: white;
+    stroke-width: 3;
+    animation: net-wave 2s ease-in-out infinite;
+  }
+  .net-wave--2 {
+    animation-delay: 0.35s;
+  }
+  @keyframes net-wave {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  .net-warn {
+    fill: var(--brand-cta);
+  }
+  .net-ok {
+    fill: var(--brand-accent);
+  }
+  .net-scan {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* the repair loop (9s): 0-35% broken, 35-55% scan, 55-100% fixed */
+  .net-broken {
+    animation: net-broken 9s infinite;
+  }
+  .net-fixed {
+    animation: net-fixed 9s infinite;
+  }
+  .net-scan {
+    animation: net-scan 9s infinite;
+  }
+  @keyframes net-broken {
+    0%,
+    35% {
+      opacity: 1;
+    }
+    40%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes net-fixed {
+    0%,
+    52% {
+      opacity: 0;
+    }
+    58%,
+    97% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes net-scan {
+    0%,
+    34% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    40% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    46% {
+      opacity: 0.4;
+      transform: scale(1.6);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    56%,
+    100% {
+      opacity: 0;
+      transform: scale(1.8);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .net-broken,
+    .net-scan,
+    .net-packet {
+      display: none;
+    }
+    .net-fixed {
+      animation: none;
+      opacity: 1;
+    }
+    .net-led,
+    .net-wave {
+      animation: none;
+    }
+  }
+</style>
