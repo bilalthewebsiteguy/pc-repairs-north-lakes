@@ -1,0 +1,353 @@
+---
+// Coverage Areas page (/areas-we-serve/). Same words and links as WordPress (split by src/lib/areas.ts).
+// Laid out as: route-map hero, then "Areas We Serve" with one big tile per list next to the suburb
+// checker, then a dark transit map: each WordPress list is a coloured "line" and each suburb a
+// "station" (its WordPress link), with line chips and a live search.
+// Short UI labels only: "All lines", the search placeholder, the empty-search message.
+import ArrowDown from '@lucide/astro/icons/arrow-down';
+import FileText from '@lucide/astro/icons/file-text';
+import MapPin from '@lucide/astro/icons/map-pin';
+import Phone from '@lucide/astro/icons/phone';
+import Search from '@lucide/astro/icons/search';
+import TrainFront from '@lucide/astro/icons/train-front';
+import Anchor from '@lucide/astro/icons/anchor';
+import Building2 from '@lucide/astro/icons/building';
+import CtaBand from '../CtaBand.astro';
+import HeroRouteMap from '../HeroRouteMap.astro';
+import SuburbChecker from '../SuburbChecker.astro';
+import { site } from '../../config/site';
+import { areasSections } from '../../lib/areas';
+
+interface Props {
+  heading: string; // the page's single H1 (same words as the WordPress page)
+  body: string; // raw exported markdown of the page
+}
+const { heading, body } = Astro.props;
+const p = areasSections(body);
+const total = p.regions.reduce((n, r) => n + r.suburbs.length, 0);
+
+// One look per line: first list gold, second orange
+const lines = p.regions.map((r, i) => ({
+  ...r,
+  key: r.id,
+  Icon: i === 0 ? Anchor : Building2,
+  color: i === 0 ? 'var(--brand-accent)' : 'var(--brand-cta)',
+  tile: i === 0 ? 'bg-accent text-ink' : 'bg-cta text-white',
+  badge: i === 0 ? 'bg-accent text-ink' : 'bg-cta text-white',
+}));
+const isHome = (href: string) => /computer-repairs-north-lakes\/?$/.test(href);
+---
+
+<!-- Hero: blueprint grid + the route map -->
+<section class="relative isolate overflow-hidden bg-primary text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.09] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px] [mask-image:linear-gradient(to_right,transparent,black_45%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="pointer-events-none absolute -bottom-48 -left-40 -z-10 size-[34rem] rounded-full bg-white/[0.05] blur-3xl" aria-hidden="true"></div>
+  <div class="container-site grid grid-cols-1 items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 lg:py-16">
+    <div>
+      <h1 class="font-display text-[2.5rem] leading-[1.02] font-extrabold tracking-[-0.02em] text-white sm:text-6xl xl:text-[4.1rem]">
+        {heading}
+      </h1>
+      <p class="mt-6 max-w-xl text-xl text-white/85">Servicing {site.area}</p>
+      <ul class="mt-7 flex flex-wrap gap-2.5" role="list">
+        {
+          lines.map((l) => (
+            <li>
+              <a href={`#${l.id}`} data-line-pick={l.key} class="inline-flex items-center gap-2 rounded-full bg-white/10 py-1.5 pr-3.5 pl-1.5 text-[15px] font-semibold text-white ring-1 ring-white/15 transition hover:bg-white hover:text-primary">
+                <span class:list={['grid size-6 place-items-center rounded-full', l.badge]}><l.Icon size={13} aria-hidden="true" /></span>
+                {l.title}
+                <span class="font-display font-extrabold text-accent">{l.suburbs.length}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6 text-base sm:text-lg">
+          <Phone size={19} aria-hidden="true" /> Call {site.phone.display}
+        </a>
+        <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6 text-base sm:text-lg">
+          <FileText size={18} aria-hidden="true" /> Get a Quote
+        </a>
+      </div>
+    </div>
+    <div class="w-full">
+      <HeroRouteMap regions={p.regions} />
+    </div>
+  </div>
+</section>
+
+<!-- Areas We Serve: one big tile per list + the suburb checker -->
+<section class="section relative isolate overflow-hidden bg-primary-tint">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-50 [background-image:radial-gradient(color-mix(in_oklab,var(--brand-primary),transparent_80%)_1.2px,transparent_1.2px)] [background-size:22px_22px] [mask-image:linear-gradient(to_left,black,transparent_70%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="container-site grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-12">
+    <div>
+      <div class="flex items-center gap-4">
+        {p.title && <h2 id={p.titleId} class="text-3xl font-extrabold text-primary sm:text-4xl">{p.title}</h2>}
+        <span class="grid h-9 min-w-9 -rotate-6 place-items-center rounded-lg bg-accent px-2 font-display text-base font-extrabold text-ink shadow-lift" aria-hidden="true">{total}</span>
+      </div>
+      <span class="mt-3 block h-1.5 w-20 rounded-full bg-[linear-gradient(90deg,var(--brand-primary)_0_33%,var(--brand-accent)_33%_66%,var(--brand-cta)_66%)]" aria-hidden="true"></span>
+
+      <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {
+          lines.map((l) => {
+            const first = l.suburbs[0]?.name;
+            const last = l.suburbs.at(-1)?.name;
+            return (
+              <a href={`#${l.id}`} data-line-pick={l.key} class:list={['line-tile group relative isolate flex min-h-64 flex-col overflow-hidden rounded-3xl p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lift', l.tile]}>
+                <span class="pointer-events-none absolute inset-0 -z-10 opacity-[0.08] [background-image:linear-gradient(currentColor_1px,transparent_1px),linear-gradient(90deg,currentColor_1px,transparent_1px)] [background-size:24px_24px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" aria-hidden="true" />
+                <l.Icon size={150} stroke-width={1.2} class="line-bg pointer-events-none absolute -right-8 -bottom-8 -z-10 opacity-[0.13]" aria-hidden="true" />
+                <span class="flex items-center justify-between gap-3">
+                  <span class="grid size-12 place-items-center rounded-full bg-white text-ink ring-4 ring-current/20"><l.Icon size={22} aria-hidden="true" /></span>
+                  <span class="font-display text-5xl font-extrabold tabular-nums">{l.suburbs.length}</span>
+                </span>
+                <span class="mt-5 font-display text-2xl font-extrabold">{l.title}</span>
+                {first && last && (
+                  <span class="mt-3 flex items-center gap-2 text-[15px] font-semibold opacity-90">
+                    <span class="size-2.5 rounded-full bg-current" />
+                    {first}
+                    <span class="h-1 flex-1 rounded-full bg-current opacity-40" />
+                    {last}
+                    <span class="size-2.5 rounded-full bg-current" />
+                  </span>
+                )}
+                <span class="mt-auto pt-6">
+                  <span class="grid size-9 place-items-center rounded-full bg-white/25 ring-1 ring-current/15 transition duration-300 group-hover:translate-y-1 group-hover:bg-white group-hover:text-ink">
+                    <ArrowDown size={16} aria-hidden="true" />
+                  </span>
+                </span>
+              </a>
+            );
+          })
+        }
+      </div>
+    </div>
+    <SuburbChecker />
+  </div>
+</section>
+
+<!-- Dark transit map: each list is a line, each suburb a station (its WordPress link) -->
+<section id="map" class="section relative isolate scroll-mt-24 overflow-hidden bg-ink text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px]"
+    aria-hidden="true"
+  >
+  </div>
+  <TrainFront size={420} stroke-width={0.8} class="pointer-events-none absolute -right-24 -bottom-24 -z-10 text-white/[0.04]" aria-hidden="true" />
+  <div class="container-site" data-transit>
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Show a line">
+        <button type="button" data-chip="all" aria-pressed="true" class="chip inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 font-display text-sm font-bold ring-1 ring-white/15 transition">
+          All lines <span class="rounded-full bg-white/15 px-2 text-xs tabular-nums">{total}</span>
+        </button>
+        {
+          lines.map((l) => (
+            <button type="button" data-chip={l.key} aria-pressed="false" class="chip inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 font-display text-sm font-bold ring-1 ring-white/15 transition">
+              <span class="h-2 w-5 rounded-full" style={`background:${l.color}`} />
+              {l.title}
+              <span class="rounded-full bg-white/15 px-2 text-xs tabular-nums">{l.suburbs.length}</span>
+            </button>
+          ))
+        }
+      </div>
+      <label class="relative block w-full lg:max-w-xs">
+        <span class="sr-only">Search suburbs</span>
+        <Search size={18} class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-white/50" aria-hidden="true" />
+        <input
+          type="search"
+          data-search
+          placeholder="Find your suburb"
+          autocomplete="off"
+          class="h-12 w-full rounded-xl border-2 border-white/15 bg-white/[0.06] pr-4 pl-11 text-base text-white transition outline-none placeholder:text-white/45 focus:border-accent"
+        />
+      </label>
+    </div>
+    <p class="mt-4 text-sm font-semibold text-white/60" data-count aria-live="polite">{total} suburbs</p>
+
+    <div class="mt-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+      {
+        lines.map((l) => {
+          // suburbs grouped by first letter, in WordPress order
+          const groups: { letter: string; subs: typeof l.suburbs }[] = [];
+          for (const s of l.suburbs) {
+            const letter = s.name[0].toUpperCase();
+            if (groups.at(-1)?.letter !== letter) groups.push({ letter, subs: [] });
+            groups.at(-1)!.subs.push(s);
+          }
+          return (
+            <div id={l.id} data-line={l.key} class="scroll-mt-28 rounded-3xl bg-white/[0.03] p-4 ring-1 ring-white/10 sm:p-6" style={`--line:${l.color}`}>
+              <h3 class="flex items-center gap-3 font-display text-xl font-extrabold text-white sm:text-2xl">
+                <span class:list={['grid size-10 shrink-0 place-items-center rounded-full ring-4 ring-white/10', l.badge]}>
+                  <l.Icon size={19} aria-hidden="true" />
+                </span>
+                {l.title}
+                <span class="ml-1 rounded-md bg-white/10 px-2 py-0.5 text-sm font-extrabold text-accent tabular-nums">{l.suburbs.length}</span>
+              </h3>
+              <div class="mt-6 columns-1 gap-3 sm:columns-2">
+                {groups.map((g) => (
+                  <div data-letter class="mb-3 break-inside-avoid rounded-2xl bg-white/[0.05] p-4 ring-1 ring-white/10">
+                    <div class="flex items-center gap-2.5" aria-hidden="true">
+                      <span class:list={['grid size-8 place-items-center rounded-lg font-display text-base font-extrabold', l.badge]}>{g.letter}</span>
+                      <span class="h-px flex-1 bg-white/10" />
+                    </div>
+                    <ul class="route mt-2" role="list">
+                      {g.subs.map((s) => (
+                        <li data-station data-name={s.name.toLowerCase()} class:list={['stn', isHome(s.href) && 'is-home']}>
+                          <a href={s.href} class="group flex items-center gap-3 py-1.5">
+                            <span class="sdot" aria-hidden="true" />
+                            <span class="font-display text-[15px] leading-tight font-bold text-white transition group-hover:text-accent">{s.name}</span>
+                            {isHome(s.href) && <MapPin size={15} class="text-accent" aria-hidden="true" />}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })
+      }
+    </div>
+    <div data-empty hidden class="mt-8 rounded-2xl bg-white/[0.06] p-6 ring-1 ring-white/10">
+      <p class="text-white/80">We couldn't find that suburb. Call us, there's a good chance we still cover it.</p>
+      <a href={`tel:${site.phone.tel}`} class="btn-cta mt-4 min-h-13 px-6"><Phone size={18} aria-hidden="true" /> Call {site.phone.display}</a>
+    </div>
+  </div>
+</section>
+
+<CtaBand />
+
+<style>
+  .line-bg {
+    transition: transform 0.5s ease;
+  }
+  .line-tile:hover .line-bg {
+    transform: rotate(-8deg) scale(1.06);
+  }
+  .chip[aria-pressed='true'] {
+    background: var(--brand-accent);
+    color: var(--brand-ink);
+    --tw-ring-color: transparent;
+  }
+  .chip:not([aria-pressed='true']):hover {
+    background: rgb(255 255 255 / 0.18);
+  }
+
+  /* each letter card: a short vertical route in the line's colour, one station per suburb */
+  .route {
+    position: relative;
+  }
+  .route::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 14px;
+    bottom: 14px;
+    width: 4px;
+    border-radius: 9999px;
+    background: var(--line);
+  }
+  .sdot {
+    position: relative;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: white;
+    border: 3px solid var(--brand-ink);
+    box-shadow: 0 0 0 2px var(--line);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .stn a:hover .sdot,
+  .stn a:focus-visible .sdot {
+    transform: scale(1.3);
+    background: var(--brand-accent);
+  }
+  .stn a:focus-visible {
+    outline: none;
+  }
+  .stn a:focus-visible > span:nth-child(2) {
+    text-decoration: underline;
+    text-decoration-color: var(--brand-accent);
+    text-underline-offset: 4px;
+  }
+  /* North Lakes: the interchange - gold station with a pulse */
+  .stn.is-home .sdot {
+    background: var(--brand-accent);
+  }
+  .stn.is-home .sdot::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 0 var(--brand-accent);
+    animation: home-ping 2s ease-out infinite;
+  }
+  @keyframes home-ping {
+    to {
+      box-shadow: 0 0 0 10px transparent;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stn.is-home .sdot::after {
+      animation: none;
+    }
+    .line-tile:hover .line-bg {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-transit]');
+  if (root) {
+    const lineEls = [...root.querySelectorAll<HTMLElement>('[data-line]')];
+    const stations = [...root.querySelectorAll<HTMLElement>('[data-station]')];
+    const chips = [...root.querySelectorAll<HTMLButtonElement>('[data-chip]')];
+    const input = root.querySelector<HTMLInputElement>('[data-search]')!;
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    const empty = root.querySelector<HTMLElement>('[data-empty]')!;
+    let line = 'all';
+
+    const apply = () => {
+      const q = input.value.trim().toLowerCase();
+      let shown = 0;
+      for (const el of lineEls) {
+        const onLine = line === 'all' || el.dataset.line === line;
+        let inLine = 0;
+        for (const st of el.querySelectorAll<HTMLElement>('[data-station]')) {
+          const hit = onLine && (!q || st.dataset.name!.includes(q));
+          st.hidden = !hit;
+          if (hit) inLine++;
+        }
+        for (const card of el.querySelectorAll<HTMLElement>('[data-letter]')) card.hidden = !card.querySelector('[data-station]:not([hidden])');
+        el.hidden = inLine === 0;
+        shown += inLine;
+      }
+      count.textContent = shown === stations.length ? `${stations.length} suburbs` : `${shown} of ${stations.length} suburbs`;
+      empty.hidden = shown > 0;
+    };
+    const pick = (key: string) => {
+      line = key;
+      for (const ch of chips) ch.setAttribute('aria-pressed', String(ch.dataset.chip === key));
+      apply();
+    };
+    for (const ch of chips) ch.addEventListener('click', () => pick(ch.dataset.chip!));
+    input.addEventListener('input', apply);
+    // hero chips + line tiles: show that line on the map
+    for (const a of document.querySelectorAll<HTMLAnchorElement>('[data-line-pick]')) {
+      a.addEventListener('click', () => {
+        input.value = '';
+        pick(a.dataset.linePick!);
+      });
+    }
+  }
+</script>

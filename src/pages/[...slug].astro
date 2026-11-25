@@ -12,6 +12,7 @@ import AboutTemplate from '../components/templates/AboutTemplate.astro';
 import MacTemplate from '../components/templates/MacTemplate.astro';
 import PcServicesTemplate from '../components/templates/PcServicesTemplate.astro';
 import ServicesTemplate from '../components/templates/ServicesTemplate.astro';
+import AreasTemplate from '../components/templates/AreasTemplate.astro';
 import PostTemplate from '../components/templates/PostTemplate.astro';
 import { pageHeading } from '../lib/heading';
 
@@ -51,6 +52,8 @@ const isSuburb = kind === 'page' && entry.data.slug.startsWith('computer-repairs
       <MacTemplate heading={heading} body={entry.body ?? ''} />
     ) : entry.data.path === '/services/' ? (
       <ServicesTemplate heading={heading} body={entry.body ?? ''} />
+    ) : entry.data.path === '/areas-we-serve/' ? (
+      <AreasTemplate heading={heading} body={entry.body ?? ''} />
     ) : entry.data.path === '/about-us/' ? (
       <AboutTemplate heading={heading} body={entry.body ?? ''} />
     ) : isSuburb ? (

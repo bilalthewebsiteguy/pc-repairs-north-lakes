@@ -1,0 +1,186 @@
+---
+/**
+ * Coverage Areas hero: a transit-style route map. The gold line is the Moreton Bay Areas list, the
+ * orange line is the Northside Suburbs list; they meet at a North Lakes interchange. A small van
+ * travels the lines. Station names are real suburbs from the page's own lists (a station whose
+ * name isn't in the lists is simply not drawn). Not to scale - it's a diagram, not a map.
+ * Reduced motion: the van is hidden and the interchange stops pulsing.
+ */
+import type { Region } from '../lib/areas';
+
+interface Props {
+  regions: Region[];
+}
+const { regions } = Astro.props;
+const all = new Set(regions.flatMap((r) => r.suburbs.map((s) => s.name)));
+const [bay, north] = regions;
+
+// [name, x, y, label side]
+type St = [string, number, number, 'l' | 'r' | 't' | 'b'];
+const goldStations: St[] = [
+  ['Caboolture', 80, 56, 'r'],
+  ['Morayfield', 80, 112, 'r'],
+  ['Burpengary', 125, 165, 'r'],
+  ['Narangba', 170, 210, 'l'],
+  ['Kallangur', 235, 210, 'b'],
+];
+const branchStations: St[] = [
+  ['Mango Hill', 340, 170, 'l'],
+  ['Rothwell', 400, 130, 't'],
+  ['Redcliffe', 470, 130, 't'],
+];
+const orangeStations: St[] = [
+  ['Bald Hills', 300, 262, 'r'],
+  ['Aspley', 262, 330, 'r'],
+  ['Chermside', 222, 370, 'b'],
+  ['Kedron', 155, 370, 't'],
+  ['Albion', 90, 370, 'b'],
+];
+const keep = (list: St[]) => list.filter(([n]) => all.has(n));
+const label = ([, x, y, side]: St) =>
+  side === 'r' ? { x: x + 14, y: y + 4, a: 'start' } : side === 'l' ? { x: x - 14, y: y + 4, a: 'end' } : side === 't' ? { x, y: y - 14, a: 'middle' } : { x, y: y + 24, a: 'middle' };
+const hub = { x: 300, y: 210, name: all.has('North Lakes') ? 'North Lakes' : '' };
+---
+
+<div class="route relative mx-auto w-full max-w-[580px]">
+  <div class="relative overflow-hidden rounded-3xl bg-ink/45 ring-1 ring-white/15 shadow-panel">
+    <svg viewBox="0 0 560 440" class="block h-auto w-full" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <defs>
+        <pattern id="route-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+          <path d="M28 0H0V28" stroke="white" stroke-opacity="0.07" stroke-width="1"></path>
+        </pattern>
+      </defs>
+      <rect width="560" height="440" fill="url(#route-grid)"></rect>
+
+      <!-- coastline (decorative) -->
+      <path d="M560 0 V440 H520 C500 380 540 330 515 270 C495 220 530 170 512 110 C500 70 525 30 515 0 Z" fill="white" fill-opacity="0.05"></path>
+      <path d="M515 0 C525 30 500 70 512 110 C530 170 495 220 515 270 C540 330 500 380 520 440" stroke="white" stroke-opacity="0.3" stroke-dasharray="3 7" stroke-width="2"></path>
+
+      <!-- lines -->
+      <path class="route-line" d="M80 46 V120 L170 210 H300 L340 170 L380 130 H486" stroke="var(--brand-accent)" stroke-width="9"></path>
+      <path class="route-line route-line--2" d="M300 210 V290 L222 370 H76" stroke="var(--brand-cta)" stroke-width="9"></path>
+
+      <!-- stations -->
+      {
+        [...keep(goldStations), ...keep(branchStations)].map((s) => {
+          const l = label(s);
+          return (
+            <g>
+              <circle cx={s[1]} cy={s[2]} r="7" fill="white" stroke="var(--brand-ink)" stroke-width="3" />
+              <text x={l.x} y={l.y} text-anchor={l.a} class="route-label">{s[0]}</text>
+            </g>
+          );
+        })
+      }
+      {
+        keep(orangeStations).map((s) => {
+          const l = label(s);
+          return (
+            <g>
+              <circle cx={s[1]} cy={s[2]} r="7" fill="white" stroke="var(--brand-ink)" stroke-width="3" />
+              <text x={l.x} y={l.y} text-anchor={l.a} class="route-label">{s[0]}</text>
+            </g>
+          );
+        })
+      }
+
+      <!-- the van travelling the lines -->
+      <g class="route-van">
+        <rect x="-13" y="-8" width="26" height="16" rx="4" fill="white"></rect>
+        <rect x="3" y="-5" width="7" height="6" rx="1.5" fill="var(--brand-primary)"></rect>
+        <rect x="-13" y="2" width="26" height="3" fill="var(--brand-cta)"></rect>
+        <animateMotion dur="11s" repeatCount="indefinite" rotate="auto" keyPoints="0;1;1;0" keyTimes="0;0.45;0.5;1" calcMode="linear" path="M80 46 V120 L170 210 H300 V290 L222 370 H76"></animateMotion>
+      </g>
+
+      <!-- North Lakes interchange -->
+      {
+        hub.name && (
+          <g>
+            <circle class="route-pulse" cx={hub.x} cy={hub.y} r="18" stroke="white" stroke-width="2" />
+            <circle cx={hub.x} cy={hub.y} r="13" fill="white" stroke="var(--brand-ink)" stroke-width="4" />
+            <circle cx={hub.x} cy={hub.y} r="4.5" fill="var(--brand-cta)" />
+            <rect x={hub.x + 22} y={hub.y + 8} width="104" height="28" rx="8" fill="var(--brand-accent)" />
+            <text x={hub.x + 74} y={hub.y + 27} text-anchor="middle" class="route-hub">{hub.name}</text>
+          </g>
+        )
+      }
+    </svg>
+
+    <!-- legend: the two lists, with their real counts -->
+    <div class="flex flex-wrap gap-2 border-t border-white/10 bg-ink/40 px-4 py-3">
+      {
+        bay && (
+          <span class="inline-flex items-center gap-2 rounded-full bg-white/10 py-1 pr-3 pl-1 text-sm font-semibold text-white">
+            <span class="h-2.5 w-7 rounded-full bg-accent" />
+            {bay.title} <span class="font-display font-extrabold text-accent">{bay.suburbs.length}</span>
+          </span>
+        )
+      }
+      {
+        north && (
+          <span class="inline-flex items-center gap-2 rounded-full bg-white/10 py-1 pr-3 pl-1 text-sm font-semibold text-white">
+            <span class="h-2.5 w-7 rounded-full bg-cta" />
+            {north.title} <span class="font-display font-extrabold text-accent">{north.suburbs.length}</span>
+          </span>
+        )
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  .route-label {
+    fill: white;
+    font: 700 13px var(--font-display, sans-serif);
+    paint-order: stroke;
+    stroke: var(--brand-ink);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+  }
+  .route-hub {
+    fill: var(--brand-ink);
+    font: 800 13px var(--font-display, sans-serif);
+  }
+  /* the lines draw themselves in once */
+  .route-line {
+    stroke-dasharray: 900;
+    stroke-dashoffset: 900;
+    animation: route-draw 1.6s ease-out 0.2s forwards;
+  }
+  .route-line--2 {
+    animation-delay: 0.9s;
+  }
+  @keyframes route-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  .route-pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: route-pulse 2s ease-out infinite;
+  }
+  @keyframes route-pulse {
+    from {
+      opacity: 0.9;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 0;
+      transform: scale(2.1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .route-line {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
+    .route-pulse {
+      animation: none;
+      opacity: 0;
+    }
+    .route-van {
+      display: none;
+    }
+  }
+</style>
