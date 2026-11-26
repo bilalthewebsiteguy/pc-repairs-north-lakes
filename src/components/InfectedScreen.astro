@@ -1,0 +1,275 @@
+---
+/**
+ * Drawing for "Recognizing Infection Symptoms": a browser window that is clearly not well.
+ * The signs from the page text, drawn (no words): a page that loads slowly (spinner + half-filled bar),
+ * advertising pop-ups that keep stacking up, an unknown program icon, and a locked file (ransomware).
+ * Pop-ups appear one by one on a loop. Reduced motion: everything shown, nothing moves.
+ */
+---
+
+<div class="isc relative mx-auto w-full max-w-[520px]">
+  <svg viewBox="0 0 480 380" class="block h-auto w-full" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <!-- browser window -->
+    <rect x="12" y="20" width="400" height="300" rx="18" class="isc-win"></rect>
+    <path d="M12 62 H412" class="isc-edge"></path>
+    <circle cx="38" cy="41" r="5.5" class="isc-dot-o"></circle>
+    <circle cx="56" cy="41" r="5.5" class="isc-dot-g"></circle>
+    <circle cx="74" cy="41" r="5.5" class="isc-dot-w"></circle>
+    <rect x="98" y="31" width="240" height="20" rx="10" class="isc-bar"></rect>
+    <!-- the homepage address was changed: a red-orange stripe in the address bar -->
+    <rect x="106" y="38" width="90" height="6" rx="3" class="isc-hijack"></rect>
+
+    <!-- page skeleton -->
+    <rect x="36" y="84" width="170" height="14" rx="7" class="isc-line"></rect>
+    <rect x="36" y="108" width="230" height="9" rx="4.5" class="isc-line isc-faint"></rect>
+    <rect x="36" y="125" width="200" height="9" rx="4.5" class="isc-line isc-faint"></rect>
+
+    <!-- slow: spinner + stuck progress -->
+    <g transform="translate(70 214)">
+      <circle r="30" class="isc-ring-bg"></circle>
+      <circle r="30" class="isc-ring" pathLength="100" stroke-dasharray="30 70"></circle>
+    </g>
+    <rect x="118" y="206" width="150" height="14" rx="7" class="isc-prog-bg"></rect>
+    <rect x="118" y="206" width="48" height="14" rx="7" class="isc-prog"></rect>
+
+    <!-- unknown program icon -->
+    <g transform="translate(36 262)">
+      <rect width="40" height="40" rx="10" class="isc-app"></rect>
+      <path d="M14 15 a6 6 0 1 1 8 6 v4 M20 31 v0.5" class="isc-q"></path>
+    </g>
+
+    <!-- locked file (ransomware) -->
+    <g transform="translate(300 220)">
+      <path d="M0 0 h52 l18 18 v62 h-70 z" class="isc-file"></path>
+      <path d="M52 0 v18 h18" class="isc-edge"></path>
+      <rect x="17" y="42" width="36" height="28" rx="5" class="isc-lock"></rect>
+      <path d="M24 42 v-8 a11 11 0 0 1 22 0 v8" class="isc-shackle"></path>
+      <circle cx="35" cy="56" r="3.5" fill="var(--brand-ink)"></circle>
+    </g>
+
+    <!-- pop-ups, stacking up -->
+    <g class="isc-pop isc-pop--1">
+      <rect x="250" y="78" width="170" height="100" rx="12" class="isc-popup"></rect>
+      <path d="M250 104 H420" class="isc-pop-edge"></path>
+      <path d="M402 87 l9 9 M411 87 l-9 9" class="isc-x"></path>
+      <rect x="266" y="120" width="96" height="12" rx="6" class="isc-pop-line"></rect>
+      <rect x="266" y="142" width="64" height="20" rx="6" class="isc-pop-btn"></rect>
+    </g>
+    <g class="isc-pop isc-pop--2">
+      <rect x="196" y="132" width="150" height="88" rx="12" class="isc-popup"></rect>
+      <path d="M196 156 H346" class="isc-pop-edge"></path>
+      <path d="M328 140 l8 8 M336 140 l-8 8" class="isc-x"></path>
+      <path d="M240 186 l14 -14 l14 14 z" class="isc-warn"></path>
+      <rect x="280" y="174" width="50" height="10" rx="5" class="isc-pop-line"></rect>
+    </g>
+    <g class="isc-pop isc-pop--3">
+      <rect x="318" y="182" width="150" height="92" rx="12" class="isc-popup"></rect>
+      <path d="M318 206 H468" class="isc-pop-edge"></path>
+      <path d="M450 190 l8 8 M458 190 l-8 8" class="isc-x"></path>
+      <rect x="334" y="222" width="80" height="11" rx="5.5" class="isc-pop-line"></rect>
+      <rect x="334" y="242" width="110" height="18" rx="6" class="isc-pop-btn"></rect>
+    </g>
+
+    <!-- cursor -->
+    <path d="M160 250 l0 34 l9 -8 l7 15 l7 -3 l-7 -15 l12 -1 z" class="isc-cursor"></path>
+  </svg>
+</div>
+
+<style>
+  .isc-win {
+    fill: var(--brand-ink);
+    stroke: color-mix(in oklab, var(--brand-primary), white 35%);
+    stroke-width: 2.5;
+  }
+  .isc-edge {
+    stroke: white;
+    stroke-opacity: 0.2;
+    stroke-width: 2;
+  }
+  .isc-dot-o {
+    fill: var(--brand-cta);
+  }
+  .isc-dot-g {
+    fill: var(--brand-accent);
+  }
+  .isc-dot-w {
+    fill: white;
+    fill-opacity: 0.35;
+  }
+  .isc-bar {
+    fill: white;
+    fill-opacity: 0.1;
+  }
+  .isc-hijack {
+    fill: var(--brand-cta);
+  }
+  .isc-line {
+    fill: white;
+    fill-opacity: 0.35;
+  }
+  .isc-faint {
+    fill-opacity: 0.15;
+  }
+  .isc-ring-bg {
+    stroke: white;
+    stroke-opacity: 0.12;
+    stroke-width: 7;
+  }
+  .isc-ring {
+    stroke: var(--brand-accent);
+    stroke-width: 7;
+    transform-origin: 0 0;
+    animation: isc-spin 2.4s linear infinite;
+  }
+  .isc-prog-bg {
+    fill: white;
+    fill-opacity: 0.12;
+  }
+  .isc-prog {
+    fill: var(--brand-accent);
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: isc-crawl 6s ease-in-out infinite;
+  }
+  .isc-app {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 45%);
+    stroke: white;
+    stroke-opacity: 0.4;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
+  }
+  .isc-q {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .isc-file {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 45%);
+    stroke: white;
+    stroke-opacity: 0.5;
+    stroke-width: 2;
+  }
+  .isc-lock {
+    fill: var(--brand-cta);
+  }
+  .isc-shackle {
+    stroke: var(--brand-cta);
+    stroke-width: 4;
+  }
+  .isc-popup {
+    fill: white;
+    stroke: var(--brand-cta);
+    stroke-width: 3;
+  }
+  .isc-pop-edge {
+    stroke: var(--brand-cta);
+    stroke-opacity: 0.35;
+    stroke-width: 2;
+  }
+  .isc-x {
+    stroke: var(--brand-ink);
+    stroke-width: 2.5;
+  }
+  .isc-pop-line {
+    fill: var(--brand-ink);
+    fill-opacity: 0.18;
+  }
+  .isc-pop-btn {
+    fill: var(--brand-cta);
+  }
+  .isc-warn {
+    fill: var(--brand-accent);
+  }
+  .isc-cursor {
+    fill: white;
+    stroke: var(--brand-ink);
+    stroke-width: 2;
+  }
+
+  /* pop-ups appear one after another, then all clear and start again (9s) */
+  .isc-pop {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: isc-pop 9s infinite;
+  }
+  .isc-pop--2 {
+    animation-name: isc-pop-2;
+  }
+  .isc-pop--3 {
+    animation-name: isc-pop-3;
+  }
+  @keyframes isc-pop {
+    0%,
+    6% {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+    10%,
+    92% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    97%,
+    100% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+  @keyframes isc-pop-2 {
+    0%,
+    26% {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+    30%,
+    92% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    97%,
+    100% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+  @keyframes isc-pop-3 {
+    0%,
+    46% {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+    50%,
+    92% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    97%,
+    100% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+  @keyframes isc-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes isc-crawl {
+    0%,
+    100% {
+      transform: scaleX(0.6);
+    }
+    50% {
+      transform: scaleX(1.05);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .isc-pop,
+    .isc-ring,
+    .isc-prog {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

@@ -1,0 +1,663 @@
+---
+/**
+ * Virus and Spyware Removal hero: a gold shield drawn as a scanner. Inside it is a grid of file tiles,
+ * four of them infected (orange spiky blobs). On a loop (10s) a gold scan beam sweeps down the shield;
+ * as it passes each virus, the virus is caught and pulled into the "Quarantine" capsule on the right,
+ * where its slot lights up. When the sweep ends, the shield glows and a big gold tick shows "Clean".
+ * No logos, no characters. Reduced motion: the finished "Clean" state, no movement.
+ */
+
+// A virus: round body + 8 spikes with knobs, centred on 0,0 (placed with a transform)
+const spikes = Array.from({ length: 8 }, (_, i) => {
+  const a = (i * Math.PI) / 4;
+  const p = (r: number) => `${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`;
+  return { line: `M${p(8)} L${p(13)}`, knob: p(13.5).split(' ').map(Number) };
+});
+
+// File tiles inside the shield (x, y = top-left, 38 x 30)
+const cols = [104, 154, 204, 254, 304];
+const tiles = [
+  ...[96, 138, 180, 222].flatMap((y) => cols.map((x) => ({ x, y }))),
+  ...[154, 204, 254].map((x) => ({ x, y: 264 })),
+  { x: 204, y: 306 },
+];
+
+// The 4 infected tiles: where the virus sits and which quarantine slot it goes to
+const viruses = [
+  { cx: 273, cy: 111, n: 1 },
+  { cx: 123, cy: 153, n: 2 },
+  { cx: 323, cy: 237, n: 3 },
+  { cx: 173, cy: 279, n: 4 },
+];
+const slotY = [150, 196, 242, 288];
+---
+
+<div class="vs relative mx-auto w-full max-w-[580px]">
+  <div class="overflow-hidden rounded-3xl bg-ink/45 shadow-panel ring-1 ring-white/15">
+    <svg viewBox="0 0 560 440" class="block h-auto w-full" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <defs>
+        <pattern id="vs-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+          <path d="M28 0H0V28" stroke="white" stroke-opacity="0.07"></path>
+        </pattern>
+        <radialGradient id="vs-glow" cx="40%" cy="50%" r="50%">
+          <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0.16"></stop>
+          <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+        </radialGradient>
+        <linearGradient id="vs-beam" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+          <stop offset="0.85" stop-color="var(--brand-accent)" stop-opacity="0.35"></stop>
+          <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0.9"></stop>
+        </linearGradient>
+        <clipPath id="vs-shield-clip">
+          <path d="M224 50 L372 86 V196 C372 290 310 350 224 388 C138 350 76 290 76 196 V86 Z"></path>
+        </clipPath>
+        <g id="vs-virus">
+          <circle r="8.5" class="vs-virus-body"></circle>
+          {spikes.map((s) => <path d={s.line} class="vs-virus-spike" />)}
+          {spikes.map((s) => <circle cx={s.knob[0]} cy={s.knob[1]} r="2.2" class="vs-virus-knob" />)}
+          <circle cx="-2.5" cy="-2" r="2" class="vs-virus-dot"></circle>
+          <circle cx="3" cy="2.5" r="1.4" class="vs-virus-dot"></circle>
+        </g>
+      </defs>
+      <rect width="560" height="440" fill="url(#vs-grid)"></rect>
+      <rect width="560" height="440" fill="url(#vs-glow)"></rect>
+
+      <!-- status chip (top left): Scanning -> Clean -->
+      <g transform="translate(28 22)">
+        <rect width="132" height="30" rx="15" class="vs-chip"></rect>
+        <circle cx="17" cy="15" r="5" class="vs-chip-dot"></circle>
+        <text x="30" y="20" class="vs-label vs-txt-scan">SCANNING</text>
+        <text x="30" y="20" class="vs-label vs-txt-clean">CLEAN</text>
+      </g>
+
+      <!-- shield -->
+      <path d="M224 50 L372 86 V196 C372 290 310 350 224 388 C138 350 76 290 76 196 V86 Z" class="vs-shield"></path>
+      <path d="M224 50 L372 86 V196 C372 290 310 350 224 388 C138 350 76 290 76 196 V86 Z" class="vs-shield-glow"></path>
+
+      <g clip-path="url(#vs-shield-clip)">
+        <!-- file tiles -->
+        <g class="vs-tiles">
+          {
+            tiles.map((t) => (
+              <g>
+                <rect x={t.x} y={t.y} width="38" height="30" rx="5" class="vs-tile" />
+                <path d={`M${t.x + 8} ${t.y + 11} h22 M${t.x + 8} ${t.y + 19} h14`} class="vs-tile-line" />
+              </g>
+            ))
+          }
+        </g>
+
+        <!-- infected tile outlines (orange until caught) -->
+        {viruses.map((v) => <rect x={v.cx - 19} y={v.cy - 15} width="38" height="30" rx="5" class={`vs-infected vs-inf-${v.n}`} />)}
+
+        <!-- scan beam -->
+        <g class="vs-beam">
+          <rect x="60" y="-70" width="330" height="70" fill="url(#vs-beam)"></rect>
+          <path d="M60 0 H390" class="vs-beam-line"></path>
+        </g>
+      </g>
+
+      <!-- viruses: each one wiggles, then is caught and pulled into its quarantine slot -->
+      {
+        viruses.map((v) => (
+          <g class={`vs-move vs-move-${v.n}`}>
+            <g transform={`translate(${v.cx} ${v.cy})`}>
+              <g class="vs-wiggle">
+                <use href="#vs-virus" />
+              </g>
+            </g>
+          </g>
+        ))
+      }
+
+      <!-- big tick when clean -->
+      <g class="vs-done">
+        <circle cx="224" cy="214" r="46" class="vs-done-disc"></circle>
+        <path d="M202 214 l15 15 l29 -31" class="vs-done-tick"></path>
+      </g>
+
+      <!-- quarantine capsule -->
+      <g>
+        <rect x="430" y="96" width="94" height="236" rx="47" class="vs-capsule"></rect>
+        <path d="M444 126 h66" class="vs-capsule-line"></path>
+        <text x="477" y="86" text-anchor="middle" class="vs-label vs-label--gold">QUARANTINE</text>
+        <!-- lock on top -->
+        <rect x="465" y="104" width="24" height="16" rx="3" class="vs-lock"></rect>
+        <path d="M470 104 v-5 a7 7 0 0 1 14 0 v5" class="vs-lock-shackle"></path>
+        {
+          slotY.map((y, i) => (
+            <g>
+              <circle cx="477" cy={y} r="17" class="vs-slot" />
+              <g class={`vs-caught vs-caught-${i + 1}`}>
+                <circle cx="477" cy={y} r="17" class="vs-slot-ring" />
+                <g transform={`translate(477 ${y}) scale(0.62)`}>
+                  <use href="#vs-virus" class="vs-virus-caged" />
+                </g>
+                <path d={`M466 ${y - 12} v24 M477 ${y - 17} v34 M488 ${y - 12} v24`} class="vs-bars" />
+              </g>
+            </g>
+          ))
+        }
+      </g>
+
+      <!-- progress bar -->
+      <g transform="translate(76 408)">
+        <rect width="296" height="8" rx="4" class="vs-bar-bg"></rect>
+        <rect width="296" height="8" rx="4" class="vs-bar"></rect>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<style>
+  .vs-label {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    fill: white;
+  }
+  .vs-label--gold {
+    fill: var(--brand-accent);
+  }
+  .vs-chip {
+    fill: var(--brand-ink);
+    stroke: white;
+    stroke-opacity: 0.25;
+    stroke-width: 1.5;
+  }
+  .vs-chip-dot {
+    fill: var(--brand-cta);
+    animation: vs-chip-dot 10s infinite;
+  }
+
+  .vs-shield {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 30%);
+    stroke: var(--brand-accent);
+    stroke-width: 4;
+  }
+  .vs-shield-glow {
+    stroke: var(--brand-accent);
+    stroke-width: 14;
+    opacity: 0;
+    animation: vs-shield-glow 10s infinite;
+  }
+  .vs-tile {
+    fill: var(--brand-ink);
+    stroke: white;
+    stroke-opacity: 0.3;
+    stroke-width: 1.5;
+  }
+  .vs-tile-line {
+    stroke: white;
+    stroke-opacity: 0.35;
+    stroke-width: 2;
+  }
+  .vs-tiles {
+    animation: vs-tiles 10s infinite;
+  }
+  .vs-infected {
+    stroke: var(--brand-cta);
+    stroke-width: 2.5;
+  }
+  .vs-beam-line {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+
+  .vs-virus-body,
+  .vs-virus-knob {
+    fill: var(--brand-cta);
+  }
+  .vs-virus-spike {
+    stroke: var(--brand-cta);
+    stroke-width: 2.5;
+  }
+  .vs-virus-dot {
+    fill: var(--brand-ink);
+    opacity: 0.45;
+  }
+  .vs-virus-caged {
+    opacity: 0.9;
+  }
+  .vs-wiggle {
+    animation: vs-wiggle 1.6s ease-in-out infinite;
+  }
+  .vs-move:nth-of-type(odd) .vs-wiggle {
+    animation-delay: -0.8s;
+  }
+
+  .vs-done-disc {
+    fill: var(--brand-accent);
+  }
+  .vs-done-tick {
+    stroke: var(--brand-ink);
+    stroke-width: 9;
+  }
+  .vs-done {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: vs-done 10s infinite;
+  }
+
+  .vs-capsule {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-primary) 30%);
+    stroke: white;
+    stroke-width: 2.5;
+  }
+  .vs-capsule-line {
+    stroke: white;
+    stroke-opacity: 0.3;
+    stroke-width: 2;
+  }
+  .vs-lock {
+    fill: var(--brand-accent);
+  }
+  .vs-lock-shackle {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .vs-slot {
+    fill: var(--brand-ink);
+    stroke: white;
+    stroke-opacity: 0.25;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 5;
+  }
+  .vs-slot-ring {
+    fill: var(--brand-ink);
+    stroke: var(--brand-accent);
+    stroke-width: 2.5;
+  }
+  .vs-bars {
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+    stroke-opacity: 0.85;
+  }
+  .vs-bar-bg {
+    fill: white;
+    fill-opacity: 0.12;
+  }
+  .vs-bar {
+    fill: var(--brand-accent);
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: vs-bar 10s infinite;
+  }
+
+  /* ---- the loop (10s) ----
+     0-12%  idle, viruses visible       12-60% beam sweeps down (y 40 -> 400)
+     each virus is caught when the beam reaches it, then flies to its slot (4% later)
+     62-95% clean: tick + shield glow   97-100% reset */
+  .vs-beam {
+    animation: vs-beam 10s linear infinite;
+  }
+  @keyframes vs-beam {
+    0%,
+    12% {
+      transform: translateY(40px);
+      opacity: 0;
+    }
+    14% {
+      opacity: 1;
+    }
+    58% {
+      opacity: 1;
+    }
+    60% {
+      transform: translateY(400px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(400px);
+      opacity: 0;
+    }
+  }
+  @keyframes vs-bar {
+    0%,
+    12% {
+      transform: scaleX(0);
+    }
+    60%,
+    96% {
+      transform: scaleX(1);
+    }
+    100% {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes vs-chip-dot {
+    0%,
+    60% {
+      fill: var(--brand-cta);
+      opacity: 1;
+    }
+    30% {
+      opacity: 0.35;
+    }
+    62%,
+    97% {
+      fill: var(--brand-accent);
+      opacity: 1;
+    }
+  }
+  .vs-txt-scan {
+    animation: vs-txt-scan 10s infinite;
+  }
+  .vs-txt-clean {
+    opacity: 0;
+    fill: var(--brand-accent);
+    animation: vs-txt-clean 10s infinite;
+  }
+  @keyframes vs-txt-scan {
+    0%,
+    60% {
+      opacity: 1;
+    }
+    62%,
+    97% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes vs-txt-clean {
+    0%,
+    60% {
+      opacity: 0;
+    }
+    62%,
+    97% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vs-tiles {
+    0%,
+    60% {
+      opacity: 1;
+    }
+    64%,
+    95% {
+      opacity: 0.35;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes vs-shield-glow {
+    0%,
+    60% {
+      opacity: 0;
+    }
+    66% {
+      opacity: 0.45;
+    }
+    80% {
+      opacity: 0.15;
+    }
+    95%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vs-done {
+    0%,
+    61% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    66% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+    70%,
+    95% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    98%,
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+  }
+  @keyframes vs-wiggle {
+    0%,
+    100% {
+      transform: rotate(-12deg) scale(1);
+    }
+    50% {
+      transform: rotate(12deg) scale(1.08);
+    }
+  }
+
+  /* beam reaches: virus 1 (y111) ~21%, 2 (y153) ~27%, 3 (y237) ~38%, 4 (y279) ~44% */
+  .vs-move-1 {
+    animation: vs-move-1 10s infinite;
+  }
+  .vs-move-2 {
+    animation: vs-move-2 10s infinite;
+  }
+  .vs-move-3 {
+    animation: vs-move-3 10s infinite;
+  }
+  .vs-move-4 {
+    animation: vs-move-4 10s infinite;
+  }
+  .vs-inf-1 {
+    animation: vs-inf-1 10s infinite;
+  }
+  .vs-inf-2 {
+    animation: vs-inf-2 10s infinite;
+  }
+  .vs-inf-3 {
+    animation: vs-inf-3 10s infinite;
+  }
+  .vs-inf-4 {
+    animation: vs-inf-4 10s infinite;
+  }
+  .vs-caught {
+    opacity: 0;
+  }
+  .vs-caught-1 {
+    animation: vs-caught-1 10s infinite;
+  }
+  .vs-caught-2 {
+    animation: vs-caught-2 10s infinite;
+  }
+  .vs-caught-3 {
+    animation: vs-caught-3 10s infinite;
+  }
+  .vs-caught-4 {
+    animation: vs-caught-4 10s infinite;
+  }
+
+  /* virus -> slot: 1 (273,111)->(477,150)  2 (123,153)->(477,196)  3 (323,237)->(477,242)  4 (173,279)->(477,288) */
+  @keyframes vs-move-1 {
+    0%,
+    21% {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+    25% {
+      transform: translate(204px, 39px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(204px, 39px);
+      opacity: 0;
+    }
+  }
+  @keyframes vs-move-2 {
+    0%,
+    27% {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+    32% {
+      transform: translate(354px, 43px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(354px, 43px);
+      opacity: 0;
+    }
+  }
+  @keyframes vs-move-3 {
+    0%,
+    38% {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+    42% {
+      transform: translate(154px, 5px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(154px, 5px);
+      opacity: 0;
+    }
+  }
+  @keyframes vs-move-4 {
+    0%,
+    44% {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+    49% {
+      transform: translate(304px, 9px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(304px, 9px);
+      opacity: 0;
+    }
+  }
+  @keyframes vs-inf-1 {
+    0%,
+    21% {
+      opacity: 1;
+    }
+    24%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vs-inf-2 {
+    0%,
+    27% {
+      opacity: 1;
+    }
+    30%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vs-inf-3 {
+    0%,
+    38% {
+      opacity: 1;
+    }
+    41%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vs-inf-4 {
+    0%,
+    44% {
+      opacity: 1;
+    }
+    47%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vs-caught-1 {
+    0%,
+    24% {
+      opacity: 0;
+    }
+    26%,
+    97% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vs-caught-2 {
+    0%,
+    31% {
+      opacity: 0;
+    }
+    33%,
+    97% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vs-caught-3 {
+    0%,
+    41% {
+      opacity: 0;
+    }
+    43%,
+    97% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vs-caught-4 {
+    0%,
+    48% {
+      opacity: 0;
+    }
+    50%,
+    97% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vs-beam,
+    .vs-move,
+    .vs-infected,
+    .vs-txt-scan {
+      display: none;
+    }
+    .vs-wiggle,
+    .vs-chip-dot,
+    .vs-tiles,
+    .vs-shield-glow,
+    .vs-bar,
+    .vs-txt-clean,
+    .vs-done,
+    .vs-caught {
+      animation: none;
+    }
+    .vs-done,
+    .vs-caught,
+    .vs-txt-clean {
+      opacity: 1;
+    }
+    .vs-chip-dot {
+      fill: var(--brand-accent);
+    }
+    .vs-tiles {
+      opacity: 0.35;
+    }
+  }
+</style>
