@@ -15,6 +15,7 @@ import ServicesTemplate from '../components/templates/ServicesTemplate.astro';
 import AreasTemplate from '../components/templates/AreasTemplate.astro';
 import OtherServicesTemplate from '../components/templates/OtherServicesTemplate.astro';
 import VirusTemplate from '../components/templates/VirusTemplate.astro';
+import VirusNorthLakesTemplate from '../components/templates/VirusNorthLakesTemplate.astro';
 import PostTemplate from '../components/templates/PostTemplate.astro';
 import { pageHeading } from '../lib/heading';
 
@@ -60,6 +61,8 @@ const isSuburb = kind === 'page' && entry.data.slug.startsWith('computer-repairs
       <OtherServicesTemplate heading={heading} body={entry.body ?? ''} />
     ) : entry.data.path === '/virus-and-spyware-removal/' ? (
       <VirusTemplate heading={heading} body={entry.body ?? ''} />
+    ) : entry.data.path === '/virus-spyware-malware-removal-north-lakes/' ? (
+      <VirusNorthLakesTemplate heading={heading} body={entry.body ?? ''} />
     ) : entry.data.path === '/about-us/' ? (
       <AboutTemplate heading={heading} body={entry.body ?? ''} />
     ) : isSuburb ? (

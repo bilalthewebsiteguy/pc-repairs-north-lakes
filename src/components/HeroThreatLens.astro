@@ -1,0 +1,904 @@
+---
+/**
+ * Virus, Spyware, Malware Removal North Lakes hero: a "threat lens" - the view down a microscope
+ * eyepiece, drawn as a blueprint. Three specimens float in the sample: a virus (spiky ball), spyware
+ * (a bug with an eye) and malware (a worm). On a loop (12s) a gold reticle locks onto each one in turn,
+ * a tag names it, it dissolves, and its row in the "Sample" panel flips from an orange warning to a
+ * gold tick. When all three are gone the lens glows and shows "Clean".
+ * Labels are the three words of the page's H1 plus short UI labels. No logos, no characters.
+ * Reduced motion: the finished "Clean" state, nothing moves.
+ */
+
+// Lens geometry
+const cx = 210;
+const cy = 222;
+const r = 166;
+
+// Tick marks round the eyepiece (long every 30 degrees)
+const ticks = Array.from({ length: 72 }, (_, i) => {
+  const a = (i * Math.PI) / 36;
+  const long = i % 6 === 0;
+  const p = (rr: number) => `${(cx + Math.cos(a) * rr).toFixed(1)} ${(cy + Math.sin(a) * rr).toFixed(1)}`;
+  return { d: `M${p(r + 4)} L${p(r + (long ? 16 : 9))}`, long };
+});
+
+// Virus spikes (centred on 0,0)
+const spikes = Array.from({ length: 8 }, (_, i) => {
+  const a = (i * Math.PI) / 4 + Math.PI / 8;
+  const p = (rr: number) => `${(Math.cos(a) * rr).toFixed(1)} ${(Math.sin(a) * rr).toFixed(1)}`;
+  return { line: `M${p(12)} L${p(19)}`, knob: p(19.5).split(' ').map(Number) };
+});
+
+// The three specimens: where they sit in the lens and their name (words from the H1)
+const specimens = [
+  { n: 1, x: 148, y: 160, name: 'VIRUS', use: '#tl-virus' },
+  { n: 2, x: 280, y: 196, name: 'SPYWARE', use: '#tl-spy' },
+  { n: 3, x: 178, y: 304, name: 'MALWARE', use: '#tl-worm' },
+];
+
+// Sample panel rows
+const rowY = [150, 208, 266];
+
+// A few faint floating particles in the sample
+const dust = [
+  [96, 230, 2],
+  [120, 300, 1.5],
+  [250, 120, 2],
+  [318, 270, 1.6],
+  [232, 350, 1.8],
+  [300, 330, 1.3],
+  [86, 170, 1.4],
+  [200, 96, 1.5],
+];
+---
+
+<div class="tl relative mx-auto w-full max-w-[580px]">
+  <div class="overflow-hidden rounded-3xl bg-ink/45 shadow-panel ring-1 ring-white/15">
+    <svg viewBox="0 0 560 440" class="block h-auto w-full" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <defs>
+        <pattern id="tl-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+          <path d="M28 0H0V28" stroke="white" stroke-opacity="0.06"></path>
+        </pattern>
+        <pattern id="tl-dots" width="14" height="14" patternUnits="userSpaceOnUse">
+          <circle cx="7" cy="7" r="1" fill="white" fill-opacity="0.12"></circle>
+        </pattern>
+        <radialGradient id="tl-lensfill" cx="42%" cy="38%" r="70%">
+          <stop offset="0" stop-color="var(--brand-primary)" stop-opacity="0.55"></stop>
+          <stop offset="1" stop-color="var(--brand-ink)" stop-opacity="0.9"></stop>
+        </radialGradient>
+        <radialGradient id="tl-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0.7" stop-color="var(--brand-accent)" stop-opacity="0"></stop>
+          <stop offset="1" stop-color="var(--brand-accent)" stop-opacity="0.35"></stop>
+        </radialGradient>
+        <clipPath id="tl-clip">
+          <circle cx={cx} cy={cy} r={r}></circle>
+        </clipPath>
+
+        <!-- virus: spiky ball -->
+        <g id="tl-virus">
+          <circle r="12" class="tl-bug-body"></circle>
+          {spikes.map((s) => <path d={s.line} class="tl-bug-line" />)}
+          {spikes.map((s) => <circle cx={s.knob[0]} cy={s.knob[1]} r="2.6" class="tl-bug-knob" />)}
+          <circle cx="-4" cy="-3" r="2.6" class="tl-bug-dot"></circle>
+          <circle cx="4" cy="4" r="1.8" class="tl-bug-dot"></circle>
+        </g>
+        <!-- spyware: a bug with one big eye -->
+        <g id="tl-spy">
+          <path d="M-10 -9 l-6 -9 M10 -9 l6 -9" class="tl-bug-line"></path>
+          <path d="M-15 -4 h-9 M-16 4 l-8 5 M-13 10 l-5 8 M15 -4 h9 M16 4 l8 5 M13 10 l5 8" class="tl-bug-line"></path>
+          <ellipse rx="17" ry="14" class="tl-bug-body"></ellipse>
+          <path d="M-11 0 Q0 -10 11 0 Q0 10 -11 0 Z" class="tl-eye"></path>
+          <circle r="4" class="tl-pupil"></circle>
+        </g>
+        <!-- malware: a segmented worm -->
+        <g id="tl-worm">
+          <circle cx="-20" cy="4" r="5" class="tl-bug-body"></circle>
+          <circle cx="-10" cy="-3" r="6.5" class="tl-bug-body"></circle>
+          <circle cx="2" cy="-4" r="7.5" class="tl-bug-body"></circle>
+          <circle cx="15" cy="2" r="8.5" class="tl-bug-body"></circle>
+          <circle cx="18" cy="0" r="1.6" class="tl-bug-dot"></circle>
+          <circle cx="13" cy="-2" r="1.6" class="tl-bug-dot"></circle>
+          <path d="M20 -6 l4 -6 M14 -6 l1 -7" class="tl-bug-line"></path>
+        </g>
+      </defs>
+
+      <rect width="560" height="440" fill="url(#tl-grid)"></rect>
+
+      <!-- status chip: Analysing -> Clean -->
+      <g transform="translate(24 20)">
+        <rect width="140" height="30" rx="15" class="tl-chip"></rect>
+        <circle cx="17" cy="15" r="5" class="tl-chip-dot"></circle>
+        <text x="30" y="20" class="tl-label tl-txt-scan">ANALYSING</text>
+        <text x="30" y="20" class="tl-label tl-txt-clean">CLEAN</text>
+      </g>
+
+      <!-- eyepiece -->
+      <circle cx={cx} cy={cy} r={r + 22} class="tl-housing"></circle>
+      {ticks.map((t) => <path d={t.d} class={t.long ? 'tl-tick tl-tick--long' : 'tl-tick'} />)}
+      <circle cx={cx} cy={cy} r={r} fill="url(#tl-lensfill)"></circle>
+
+      <g clip-path="url(#tl-clip)">
+        <rect x={cx - r} y={cy - r} width={r * 2} height={r * 2} fill="url(#tl-dots)"></rect>
+        <!-- crosshair + measuring rings -->
+        <path d={`M${cx - r} ${cy} H${cx + r} M${cx} ${cy - r} V${cy + r}`} class="tl-cross"></path>
+        <circle cx={cx} cy={cy} r="60" class="tl-ring"></circle>
+        <circle cx={cx} cy={cy} r="118" class="tl-ring"></circle>
+        {
+          [-90, -60, -30, 30, 60, 90].map((d) => (
+            <path d={`M${cx + d} ${cy - 4} V${cy + 4} M${cx - 4} ${cy + d} H${cx + 4}`} class="tl-cross tl-cross--tick" />
+          ))
+        }
+        <g class="tl-dust">
+          {dust.map(([x, y, rr]) => <circle cx={x} cy={y} r={rr} class="tl-dust-dot" />)}
+        </g>
+
+        <!-- specimens: each one wiggles, then dissolves when the reticle has locked on -->
+        {
+          specimens.map((s) => (
+            <g transform={`translate(${s.x} ${s.y})`}>
+              <circle r="12" class={`tl-burst tl-burst-${s.n}`} />
+              <g class={`tl-spec tl-spec-${s.n}`}>
+                <g class={`tl-wiggle tl-wiggle-${s.n}`}>
+                  <use href={s.use} />
+                </g>
+              </g>
+            </g>
+          ))
+        }
+
+        <!-- lens glow + clean badge when done -->
+        <circle cx={cx} cy={cy} r={r} fill="url(#tl-glow)" class="tl-done"></circle>
+      </g>
+      <circle cx={cx} cy={cy} r={r} class="tl-rim"></circle>
+      <circle cx={cx} cy={cy} r={r} class="tl-rim-glow"></circle>
+
+      <g class="tl-done">
+        <circle cx={cx} cy={cy} r="44" class="tl-done-disc"></circle>
+        <path d={`M${cx - 20} ${cy} l14 14 l27 -29`} class="tl-done-tick"></path>
+      </g>
+
+      <!-- name tags (appear when the reticle locks on) -->
+      {
+        specimens.map((s) => {
+          const w = s.name.length * 8.4 + 22;
+          return (
+            <g class={`tl-tag tl-tag-${s.n}`} transform={`translate(${s.x - w / 2} ${s.y - 64})`}>
+              <rect width={w} height="22" rx="11" class="tl-tag-box" />
+              <text x={w / 2} y="15" text-anchor="middle" class="tl-label tl-label--ink">
+                {s.name}
+              </text>
+            </g>
+          );
+        })
+      }
+
+      <!-- reticle: moves from specimen to specimen -->
+      <g class="tl-reticle">
+        <g class="tl-reticle-in">
+          <path
+            d="M-34 -18 V-34 H-18 M18 -34 H34 V-18 M34 18 V34 H18 M-18 34 H-34 V18"
+            class="tl-reticle-corner"
+          ></path>
+          <circle r="27" class="tl-reticle-ring"></circle>
+          <path d="M-8 0 H-3 M3 0 H8 M0 -8 V-3 M0 3 V8" class="tl-reticle-cross"></path>
+        </g>
+      </g>
+
+      <!-- sample panel -->
+      <g>
+        <rect x="404" y="92" width="134" height="252" rx="20" class="tl-panel"></rect>
+        <text x="422" y="122" class="tl-label tl-label--gold">SAMPLE</text>
+        <path d="M422 132 H520" class="tl-panel-line"></path>
+        {
+          specimens.map((s, i) => (
+            <g>
+              <circle cx="436" cy={rowY[i]} r="16" class="tl-row-chip" />
+              <g transform={`translate(436 ${rowY[i]}) scale(0.52)`}>
+                <use href={s.use} />
+              </g>
+              <text x="458" y={rowY[i] - 2} class="tl-label tl-label--sm">
+                {s.name}
+              </text>
+              <g class={`tl-warn tl-warn-${s.n}`}>
+                <rect x="458" y={rowY[i] + 6} width="54" height="6" rx="3" class="tl-row-bar tl-row-bar--warn" />
+              </g>
+              <g class={`tl-ok tl-ok-${s.n}`}>
+                <rect x="458" y={rowY[i] + 6} width="54" height="6" rx="3" class="tl-row-bar tl-row-bar--ok" />
+                <circle cx="520" cy={rowY[i] - 6} r="8" class="tl-ok-disc" />
+                <path d={`M516 ${rowY[i] - 6} l3 3 l5 -6`} class="tl-ok-tick" />
+              </g>
+            </g>
+          ))
+        }
+        <!-- progress -->
+        <rect x="422" y="306" width="98" height="10" rx="5" class="tl-prog-track"></rect>
+        <rect x="422" y="306" width="98" height="10" rx="5" class="tl-prog"></rect>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<style>
+  .tl svg {
+    --tl-loop: 12s;
+  }
+
+  /* ---------- static parts ---------- */
+  .tl-label {
+    font-family: var(--font-display, 'Montserrat Variable', sans-serif);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    fill: white;
+  }
+  .tl-label--gold {
+    fill: var(--brand-accent);
+  }
+  .tl-label--ink {
+    fill: var(--brand-ink);
+    font-size: 11px;
+  }
+  .tl-label--sm {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    fill: rgb(255 255 255 / 0.85);
+  }
+  .tl-chip {
+    fill: rgb(255 255 255 / 0.08);
+    stroke: rgb(255 255 255 / 0.2);
+  }
+  .tl-housing {
+    fill: var(--brand-ink);
+    fill-opacity: 0.55;
+    stroke: rgb(255 255 255 / 0.18);
+    stroke-width: 1.5;
+  }
+  .tl-tick {
+    stroke: rgb(255 255 255 / 0.3);
+    stroke-width: 1.2;
+  }
+  .tl-tick--long {
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+  }
+  .tl-rim {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .tl-rim-glow {
+    stroke: var(--brand-accent);
+    stroke-width: 10;
+    opacity: 0;
+    animation: tl-rim-glow var(--tl-loop) ease-in-out infinite;
+  }
+  .tl-cross {
+    stroke: rgb(255 255 255 / 0.14);
+    stroke-width: 1;
+    stroke-dasharray: 4 5;
+  }
+  .tl-cross--tick {
+    stroke-dasharray: none;
+    stroke: rgb(255 255 255 / 0.3);
+  }
+  .tl-ring {
+    stroke: rgb(255 255 255 / 0.1);
+    stroke-width: 1;
+  }
+  .tl-dust-dot {
+    fill: white;
+    fill-opacity: 0.25;
+  }
+  .tl-dust {
+    animation: tl-drift 9s ease-in-out infinite alternate;
+  }
+
+  /* specimens */
+  .tl-bug-body {
+    fill: var(--brand-cta);
+    fill-opacity: 0.28;
+    stroke: var(--brand-cta);
+    stroke-width: 2.4;
+  }
+  .tl-bug-line {
+    stroke: var(--brand-cta);
+    stroke-width: 2.4;
+  }
+  .tl-bug-knob,
+  .tl-bug-dot {
+    fill: var(--brand-cta);
+  }
+  .tl-eye {
+    fill: white;
+    stroke: white;
+    stroke-width: 1.5;
+  }
+  .tl-pupil {
+    fill: var(--brand-ink);
+  }
+
+  /* panel */
+  .tl-panel {
+    fill: rgb(255 255 255 / 0.05);
+    stroke: rgb(255 255 255 / 0.16);
+  }
+  .tl-panel-line {
+    stroke: rgb(255 255 255 / 0.16);
+  }
+  .tl-row-chip {
+    fill: var(--brand-ink);
+    stroke: rgb(255 255 255 / 0.2);
+  }
+  .tl-row-bar--warn {
+    fill: var(--brand-cta);
+    fill-opacity: 0.8;
+  }
+  .tl-row-bar--ok {
+    fill: var(--brand-accent);
+  }
+  .tl-ok-disc {
+    fill: var(--brand-accent);
+  }
+  .tl-ok-tick {
+    stroke: var(--brand-ink);
+    stroke-width: 2.2;
+  }
+  .tl-prog-track {
+    fill: rgb(255 255 255 / 0.1);
+  }
+  .tl-prog {
+    fill: var(--brand-accent);
+    transform-box: fill-box;
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation: tl-prog var(--tl-loop) linear infinite;
+  }
+
+  /* tags, reticle, done */
+  .tl-tag-box {
+    fill: var(--brand-accent);
+  }
+  .tl-reticle-corner {
+    stroke: var(--brand-accent);
+    stroke-width: 3.5;
+  }
+  .tl-reticle-ring {
+    stroke: var(--brand-accent);
+    stroke-width: 1.5;
+    stroke-dasharray: 6 6;
+  }
+  .tl-reticle-cross {
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+  }
+  .tl-done-disc {
+    fill: var(--brand-accent);
+  }
+  .tl-done-tick {
+    stroke: var(--brand-ink);
+    stroke-width: 7;
+  }
+  .tl-burst {
+    stroke: var(--brand-accent);
+    stroke-width: 2.5;
+    opacity: 0;
+  }
+
+  /* ---------- animation ---------- */
+  .tl-chip-dot {
+    fill: var(--brand-cta);
+    animation: tl-dot var(--tl-loop) linear infinite;
+  }
+  .tl-txt-scan {
+    animation: tl-show-scan var(--tl-loop) linear infinite;
+  }
+  .tl-txt-clean {
+    opacity: 0;
+    animation: tl-show-clean var(--tl-loop) linear infinite;
+  }
+  .tl-reticle {
+    transform: translate(210px, 222px);
+    animation: tl-reticle var(--tl-loop) cubic-bezier(0.55, 0, 0.3, 1) infinite;
+  }
+  .tl-reticle-in {
+    transform-origin: 0 0;
+    animation: tl-lock var(--tl-loop) ease-in-out infinite;
+  }
+  .tl-spec {
+    transform-origin: 0 0;
+  }
+  .tl-spec-1 {
+    animation: tl-spec-1 var(--tl-loop) ease-in infinite;
+  }
+  .tl-spec-2 {
+    animation: tl-spec-2 var(--tl-loop) ease-in infinite;
+  }
+  .tl-spec-3 {
+    animation: tl-spec-3 var(--tl-loop) ease-in infinite;
+  }
+  .tl-wiggle {
+    transform-origin: 0 0;
+  }
+  .tl-wiggle-1 {
+    animation: tl-spin 7s linear infinite;
+  }
+  .tl-wiggle-2 {
+    animation: tl-bob 2.2s ease-in-out infinite alternate;
+  }
+  .tl-wiggle-3 {
+    animation: tl-sway 1.8s ease-in-out infinite alternate;
+  }
+  .tl-burst {
+    transform-origin: 0 0;
+  }
+  .tl-burst-1 {
+    animation: tl-burst-1 var(--tl-loop) ease-out infinite;
+  }
+  .tl-burst-2 {
+    animation: tl-burst-2 var(--tl-loop) ease-out infinite;
+  }
+  .tl-burst-3 {
+    animation: tl-burst-3 var(--tl-loop) ease-out infinite;
+  }
+  .tl-tag {
+    opacity: 0;
+  }
+  .tl-tag-1 {
+    animation: tl-tag-1 var(--tl-loop) linear infinite;
+  }
+  .tl-tag-2 {
+    animation: tl-tag-2 var(--tl-loop) linear infinite;
+  }
+  .tl-tag-3 {
+    animation: tl-tag-3 var(--tl-loop) linear infinite;
+  }
+  .tl-warn-1 {
+    animation: tl-warn-1 var(--tl-loop) linear infinite;
+  }
+  .tl-warn-2 {
+    animation: tl-warn-2 var(--tl-loop) linear infinite;
+  }
+  .tl-warn-3 {
+    animation: tl-warn-3 var(--tl-loop) linear infinite;
+  }
+  .tl-ok {
+    opacity: 0;
+  }
+  .tl-ok-1 {
+    animation: tl-ok-1 var(--tl-loop) linear infinite;
+  }
+  .tl-ok-2 {
+    animation: tl-ok-2 var(--tl-loop) linear infinite;
+  }
+  .tl-ok-3 {
+    animation: tl-ok-3 var(--tl-loop) linear infinite;
+  }
+  .tl-done {
+    opacity: 0;
+    animation: tl-done var(--tl-loop) ease-out infinite;
+  }
+
+  /* reticle path: centre -> virus (148,160) -> spyware (280,196) -> malware (178,304) -> centre */
+  @keyframes tl-reticle {
+    0% {
+      transform: translate(210px, 222px);
+      opacity: 0;
+    }
+    5% {
+      transform: translate(210px, 222px);
+      opacity: 1;
+    }
+    13%,
+    27% {
+      transform: translate(148px, 160px);
+      opacity: 1;
+    }
+    35%,
+    48% {
+      transform: translate(280px, 196px);
+      opacity: 1;
+    }
+    56%,
+    69% {
+      transform: translate(178px, 304px);
+      opacity: 1;
+    }
+    74%,
+    100% {
+      transform: translate(210px, 222px);
+      opacity: 0;
+    }
+  }
+  /* the corners squeeze in when they lock on */
+  @keyframes tl-lock {
+    0%,
+    13%,
+    20%,
+    35%,
+    41%,
+    56%,
+    62%,
+    100% {
+      transform: scale(1);
+    }
+    16%,
+    38%,
+    59% {
+      transform: scale(0.78);
+    }
+  }
+  @keyframes tl-spec-1 {
+    0%,
+    21% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    26%,
+    96% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes tl-spec-2 {
+    0%,
+    42% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    47%,
+    96% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes tl-spec-3 {
+    0%,
+    63% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    68%,
+    96% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes tl-burst-1 {
+    0%,
+    22% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    23% {
+      opacity: 1;
+    }
+    29%,
+    100% {
+      transform: scale(3.4);
+      opacity: 0;
+    }
+  }
+  @keyframes tl-burst-2 {
+    0%,
+    43% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    44% {
+      opacity: 1;
+    }
+    50%,
+    100% {
+      transform: scale(3.4);
+      opacity: 0;
+    }
+  }
+  @keyframes tl-burst-3 {
+    0%,
+    64% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    65% {
+      opacity: 1;
+    }
+    71%,
+    100% {
+      transform: scale(3.4);
+      opacity: 0;
+    }
+  }
+  @keyframes tl-tag-1 {
+    0%,
+    15% {
+      opacity: 0;
+    }
+    17%,
+    25% {
+      opacity: 1;
+    }
+    27%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes tl-tag-2 {
+    0%,
+    37% {
+      opacity: 0;
+    }
+    39%,
+    46% {
+      opacity: 1;
+    }
+    48%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes tl-tag-3 {
+    0%,
+    58% {
+      opacity: 0;
+    }
+    60%,
+    67% {
+      opacity: 1;
+    }
+    69%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes tl-warn-1 {
+    0%,
+    25% {
+      opacity: 1;
+    }
+    27%,
+    97% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes tl-warn-2 {
+    0%,
+    46% {
+      opacity: 1;
+    }
+    48%,
+    97% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes tl-warn-3 {
+    0%,
+    67% {
+      opacity: 1;
+    }
+    69%,
+    97% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes tl-ok-1 {
+    0%,
+    25% {
+      opacity: 0;
+    }
+    27%,
+    96% {
+      opacity: 1;
+    }
+    99%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes tl-ok-2 {
+    0%,
+    46% {
+      opacity: 0;
+    }
+    48%,
+    96% {
+      opacity: 1;
+    }
+    99%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes tl-ok-3 {
+    0%,
+    67% {
+      opacity: 0;
+    }
+    69%,
+    96% {
+      opacity: 1;
+    }
+    99%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes tl-prog {
+    0%,
+    26% {
+      transform: scaleX(0);
+    }
+    28%,
+    47% {
+      transform: scaleX(0.34);
+    }
+    49%,
+    68% {
+      transform: scaleX(0.67);
+    }
+    70%,
+    96% {
+      transform: scaleX(1);
+    }
+    100% {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes tl-done {
+    0%,
+    72% {
+      opacity: 0;
+    }
+    76%,
+    93% {
+      opacity: 1;
+    }
+    97%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes tl-rim-glow {
+    0%,
+    72% {
+      opacity: 0;
+    }
+    78% {
+      opacity: 0.35;
+    }
+    93% {
+      opacity: 0.2;
+    }
+    97%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes tl-show-scan {
+    0%,
+    72% {
+      opacity: 1;
+    }
+    73%,
+    96% {
+      opacity: 0;
+    }
+    97%,
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes tl-show-clean {
+    0%,
+    72% {
+      opacity: 0;
+    }
+    73%,
+    96% {
+      opacity: 1;
+    }
+    97%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes tl-dot {
+    0%,
+    72% {
+      fill: var(--brand-cta);
+      opacity: 1;
+    }
+    73%,
+    96% {
+      fill: var(--brand-accent);
+      opacity: 1;
+    }
+    100% {
+      fill: var(--brand-cta);
+    }
+  }
+  @keyframes tl-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes tl-bob {
+    from {
+      transform: translate(-3px, 2px) rotate(-6deg);
+    }
+    to {
+      transform: translate(3px, -3px) rotate(6deg);
+    }
+  }
+  @keyframes tl-sway {
+    from {
+      transform: translateX(-3px) skewX(-6deg);
+    }
+    to {
+      transform: translateX(3px) skewX(6deg);
+    }
+  }
+  @keyframes tl-drift {
+    from {
+      transform: translate(-4px, 3px);
+    }
+    to {
+      transform: translate(4px, -4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tl-reticle,
+    .tl-spec,
+    .tl-tag,
+    .tl-burst,
+    .tl-warn-1,
+    .tl-warn-2,
+    .tl-warn-3,
+    .tl-txt-scan {
+      display: none;
+    }
+    .tl *,
+    .tl-done,
+    .tl-ok,
+    .tl-prog,
+    .tl-txt-clean,
+    .tl-rim-glow,
+    .tl-chip-dot {
+      animation: none !important;
+    }
+    .tl-done,
+    .tl-ok,
+    .tl-txt-clean {
+      opacity: 1;
+    }
+    .tl-rim-glow {
+      opacity: 0.25;
+    }
+    .tl-prog {
+      transform: scaleX(1);
+    }
+    .tl-chip-dot {
+      fill: var(--brand-accent);
+    }
+  }
+</style>

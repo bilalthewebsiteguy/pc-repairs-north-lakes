@@ -1,0 +1,834 @@
+---
+// Virus, Spyware, Malware Removal North Lakes (/virus-spyware-malware-removal-north-lakes/).
+// WordPress has the same "##" sections as /virus-and-spyware-removal/, so the words are split by the same
+// src/lib/virus.ts. This page gets its OWN layout so the two pages don't look alike.
+// Nothing is typed here except short UI labels (step names, criteria names, symptom names, "Findings"...).
+// Layout:
+//   1. Hero: the "threat lens" microscope (HeroThreatLens). H1 = page title, "North Lakes" in gold.
+//   2. Intro (lead paragraph + callout) next to a "Findings" lab-report card = Key Takeaways, each
+//      finding jumps to the section that explains it. Side call card underneath on desktop.
+//   3. Understanding Cyber Threats: sticky lead on the left, specimen cards on the right.
+//   4. Choosing the Right Antivirus: the question as a gold banner, then 4 criteria tiles with gauges.
+//   5. Daily Security Practices: a staggered "routine" of 4 cards on a dashed line.
+//   6. Dark blueprint: Recognizing Infection Symptoms as a symptom checker. Tick what you see, the
+//      gauge needle moves. All text is always visible; the ticks only highlight.
+//   7. Comprehensive Removal Process: a 4-stage pipeline with a gold progress line.
+//   8. Maintaining Ongoing Protection: a "security settings" window with switches turned on.
+//   9. FAQ: the 4 WordPress questions as a one-open-at-a-time accordion.
+import ArrowDown from '@lucide/astro/icons/arrow-down';
+import Activity from '@lucide/astro/icons/activity';
+import AppWindow from '@lucide/astro/icons/app-window';
+import BadgeCheck from '@lucide/astro/icons/badge-check';
+import Biohazard from '@lucide/astro/icons/biohazard';
+import BookOpen from '@lucide/astro/icons/book-open';
+import Bug from '@lucide/astro/icons/bug';
+import Check from '@lucide/astro/icons/check';
+import ClipboardList from '@lucide/astro/icons/clipboard-list';
+import Eye from '@lucide/astro/icons/eye';
+import FileLock from '@lucide/astro/icons/file-lock';
+import FileText from '@lucide/astro/icons/file-text';
+import Gauge from '@lucide/astro/icons/gauge';
+import Hammer from '@lucide/astro/icons/hammer';
+import Microscope from '@lucide/astro/icons/microscope';
+import Phone from '@lucide/astro/icons/phone';
+import Plus from '@lucide/astro/icons/plus';
+import ScanSearch from '@lucide/astro/icons/scan-search';
+import Settings from '@lucide/astro/icons/settings';
+import ShieldCheck from '@lucide/astro/icons/shield-check';
+import ShieldQuestionMark from '@lucide/astro/icons/shield-question-mark';
+import SlidersHorizontal from '@lucide/astro/icons/sliders-horizontal';
+import Usb from '@lucide/astro/icons/usb';
+import Wallet from '@lucide/astro/icons/wallet';
+import Worm from '@lucide/astro/icons/worm';
+import CtaBand from '../CtaBand.astro';
+import HeroThreatLens from '../HeroThreatLens.astro';
+import SideCallCard from '../SideCallCard.astro';
+import { site } from '../../config/site';
+import { heroFacts, splitHeading, virusSections } from '../../lib/virus';
+
+interface Props {
+  heading: string; // the page's single H1 (the WordPress page had none, so this is the page title)
+  body: string; // raw exported markdown of the page
+}
+const { heading, body } = Astro.props;
+const h = splitHeading(heading);
+// "North Lakes" at the end of the H1 is picked out in gold (same words, same order)
+const place = !h.rest ? h.title.match(/^(.+?)\s+(North Lakes)$/) : null;
+const facts = heroFacts(body);
+const p = await virusSections(body);
+
+const tones = ['bg-primary text-white', 'bg-accent text-ink', 'bg-cta text-white'];
+const tone = (i: number) => tones[i % tones.length];
+const pad = (n: number) => String(n).padStart(2, '0');
+const linkStyle =
+  '[&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:decoration-accent [&_a]:decoration-2 [&_a]:underline-offset-4';
+const titleCls = 'font-display text-3xl font-extrabold text-primary sm:text-4xl';
+const dotBg =
+  'pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:radial-gradient(white_1.2px,transparent_1.2px)] [background-size:20px_20px]';
+
+// 2. Findings: each Key Takeaway jumps to the section that explains it (only if that section exists)
+const findingLinks = [p.cyber, p.daily, p.symptoms, p.removal].map((s) => (s ? `#${s.id}` : ''));
+const findingIcons = [Microscope, SlidersHorizontal, Activity, ScanSearch];
+
+// 3. Cyber threats: first paragraph = lead, the rest = specimen cards
+const cyberLead = p.cyber?.paras[0] ?? '';
+const cyberCards = p.cyber?.paras.slice(1) ?? [];
+const cyberIcons = [Bug, Eye, Worm, Biohazard];
+
+// 4. Antivirus: paragraph 1 = the question; next 4 = criteria (labels only if there are exactly 4)
+const avQuestion = p.antivirus?.paras[0] ?? '';
+const avParas = p.antivirus?.paras.slice(1) ?? [];
+const avLabels = avParas.length === 4 ? ['Protection', 'Detection', 'Ease of use', 'Value'] : [];
+const avIcons = [ShieldCheck, Gauge, AppWindow, Wallet];
+const avTiles = [
+  'bg-primary text-white',
+  'bg-accent-soft text-ink ring-1 ring-accent/40',
+  'bg-ink text-white',
+  'bg-white text-ink ring-1 ring-slate-200',
+];
+
+// 5. Daily routine (labels only if there are exactly 4 paragraphs)
+const dailyLabels = p.daily?.paras.length === 4 ? ['Settings & updates', 'System scans', 'Removable media', 'Keep learning'] : [];
+const dailyIcons = [SlidersHorizontal, ScanSearch, Usb, BookOpen];
+
+// 6. Symptoms: all but the last paragraph are symptoms; the last one leads into the removal process
+const symptomParas = p.symptoms ? p.symptoms.paras.slice(0, -1) : [];
+const symptomNext = p.symptoms?.paras.at(-1) ?? '';
+const symptomLabels = symptomParas.length === 3 ? ['Slowdowns & crashes', 'Unknown software & pop-ups', 'Ransomware & locked files'] : [];
+const symptomIcons = [Activity, AppWindow, FileLock];
+
+// 7. Removal: paragraph 1 = lead, last one = the goal, the ones between = stages
+const removalLead = p.removal?.paras[0] ?? '';
+const removalMid = p.removal ? p.removal.paras.slice(1, p.removal.paras.length > 2 ? -1 : undefined) : [];
+const removalGoal = p.removal && p.removal.paras.length > 2 ? p.removal.paras.at(-1)! : '';
+const stageLabels = removalMid.length === 3 ? ['Scan', 'Remove', 'Repair'] : removalMid.map((_, i) => `Stage ${i + 1}`);
+const stageIcons = [ScanSearch, Bug, Hammer];
+---
+
+<!-- 1. Hero -->
+<section class="relative isolate overflow-hidden bg-primary text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.09] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px] [mask-image:linear-gradient(to_right,transparent,black_45%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="pointer-events-none absolute -top-40 -left-40 -z-10 size-[34rem] rounded-full bg-accent/[0.08] blur-3xl" aria-hidden="true"></div>
+  <div class="pointer-events-none absolute -right-32 -bottom-48 -z-10 size-[30rem] rounded-full bg-cta/[0.10] blur-3xl" aria-hidden="true"></div>
+
+  <div class="container-site grid grid-cols-1 items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 lg:py-16">
+    <div>
+      <h1 class="font-display font-extrabold text-white">
+        <span class="block text-[2.5rem] leading-[1.02] tracking-[-0.02em] sm:text-6xl xl:text-[4.1rem]">
+          {
+            place ? (
+              <>
+                {place[1]}{' '}
+                <span class="relative inline-block whitespace-nowrap text-accent">
+                  {place[2]}
+                  <svg class="absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M2 9 C 50 2, 150 2, 198 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                  </svg>
+                </span>
+              </>
+            ) : (
+              h.title
+            )
+          }
+        </span>{' '}
+        {
+          h.rest && (
+            <span class="mt-5 flex max-w-xl gap-3 text-lg leading-snug font-bold tracking-normal text-white/85 sm:text-xl">
+              <span class="text-accent">{h.dash}</span> <span>{h.rest}</span>
+            </span>
+          )
+        }
+      </h1>
+
+      {
+        facts.length > 0 && (
+          <ul class="mt-8 space-y-2.5" role="list">
+            {facts.map((f) => (
+              <li class="flex items-center gap-3 text-lg text-white/90">
+                <span class="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-ink">
+                  <Check size={14} stroke-width={3.5} aria-hidden="true" />
+                </span>
+                <span class="first-letter:uppercase">{f}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6 text-base sm:text-lg">
+          <Phone size={19} aria-hidden="true" /> Call {site.phone.display}
+        </a>
+        <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6 text-base sm:text-lg">
+          <FileText size={18} aria-hidden="true" /> Get a Quote
+        </a>
+      </div>
+    </div>
+    <div class="w-full">
+      <HeroThreatLens />
+    </div>
+  </div>
+</section>
+
+<!-- 2. Intro + Findings (Key Takeaways) on the left, call card pinned on the right -->
+<section class="section relative isolate overflow-x-clip bg-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-60 [background-image:radial-gradient(color-mix(in_oklab,var(--brand-primary),transparent_84%)_1.2px,transparent_1.2px)] [background-size:22px_22px] [mask-image:linear-gradient(to_left,black,transparent_60%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="container-site grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+    <div class="min-w-0">
+      {
+        p.intro.length > 0 && (
+          <div>
+            <div class="relative pl-6">
+              <span class="absolute top-1 bottom-1 left-0 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+              <div class="font-display text-2xl leading-snug font-bold text-ink sm:text-[1.65rem] [&_p]:m-0" set:html={p.intro[0]} />
+            </div>
+            <div class="mt-7">
+              {p.intro.length > 2 && (
+                <div class:list={['space-y-5 text-lg leading-relaxed text-slate-700', linkStyle]} set:html={p.intro.slice(1, -1).join('')} />
+              )}
+              {p.intro.length > 1 && (
+                <div class="relative mt-6 overflow-hidden rounded-2xl bg-accent-soft p-5 ring-1 ring-accent/40">
+                  <span class="absolute inset-y-0 left-0 w-1.5 bg-accent" aria-hidden="true" />
+                  <div class="flex items-start gap-4">
+                    <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-ink">
+                      <ShieldCheck size={21} aria-hidden="true" />
+                    </span>
+                    <div class:list={['text-[17px] leading-relaxed font-semibold text-ink [&_p]:m-0', linkStyle]} set:html={p.intro.at(-1)} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      }
+
+      {
+        p.takeaways && (
+          <div class="mt-14 overflow-hidden rounded-3xl bg-white shadow-panel ring-1 ring-slate-200">
+            <!-- lab-report header -->
+            <div class="relative isolate flex flex-wrap items-end justify-between gap-5 overflow-hidden bg-ink px-6 py-7 text-white sm:px-8">
+              <div class={dotBg} aria-hidden="true" />
+              <ClipboardList size={170} stroke-width={1.1} class="pointer-events-none absolute -top-8 right-24 -z-10 text-white/[0.06]" aria-hidden="true" />
+              <div>
+                <p class="flex items-center gap-2 font-display text-xs font-extrabold tracking-[0.18em] text-accent">
+                  <Microscope size={15} aria-hidden="true" /> FINDINGS
+                </p>
+                <h2 id={p.takeaways.id} class="mt-2 font-display text-3xl font-extrabold text-white sm:text-4xl">
+                  {p.takeaways.title}
+                </h2>
+              </div>
+              <!-- one bar per finding, filling in turn (decoration) -->
+              <div class="flex w-full max-w-[220px] gap-1.5" aria-hidden="true">
+                {p.takeaways.items.map((_, i) => (
+                  <span class="kt-bar h-2 flex-1 overflow-hidden rounded-full bg-white/15">
+                    <span class:list={['block h-full rounded-full', ['bg-primary', 'bg-accent', 'bg-cta', 'bg-accent'][i % 4]]} style={`--d:${i * 0.5}s`} />
+                  </span>
+                ))}
+              </div>
+            </div>
+            <ol class="grid grid-cols-1 gap-4 bg-primary-tint/60 p-4 sm:p-6 md:grid-cols-2" role="list">
+              {p.takeaways.items.map((html, i) => {
+                const Icon = findingIcons[i % findingIcons.length];
+                const href = findingLinks[i];
+                const inner = (
+                  <>
+                    <Icon size={130} stroke-width={1.1} class="pointer-events-none absolute -right-6 -bottom-8 -z-10 text-primary/[0.06]" aria-hidden="true" />
+                    <div class="flex items-center justify-between">
+                      <span class:list={['grid size-11 place-items-center rounded-xl', tone(i)]}>
+                        <Icon size={20} aria-hidden="true" />
+                      </span>
+                      <span class="font-display text-sm font-extrabold text-primary/50 tabular-nums">{pad(i + 1)}</span>
+                    </div>
+                    <div class="mt-4 flex-1 text-[16.5px] leading-relaxed text-slate-700 [&_p]:m-0" set:html={html} />
+                    {href && (
+                      <span class="mt-4 grid size-7 place-items-center rounded-full bg-primary-tint text-primary transition group-hover:translate-y-0.5 group-hover:bg-accent group-hover:text-ink" aria-hidden="true">
+                        <ArrowDown size={14} />
+                      </span>
+                    )}
+                  </>
+                );
+                const card = 'group relative isolate flex h-full flex-col overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift sm:p-6';
+                return <li>{href ? <a href={href} class={card}>{inner}</a> : <div class={card}>{inner}</div>}</li>;
+              })}
+            </ol>
+          </div>
+        )
+      }
+    </div>
+
+    <!-- the column runs the full height of the section, so the card can stay pinned while you scroll -->
+    <div>
+      <div class="lg:sticky lg:top-28">
+        <SideCallCard heading="Talk to a local technician" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Understanding Cyber Threats -->
+{
+  p.cyber && (
+    <section class="section relative isolate overflow-x-clip bg-primary-tint">
+      <Microscope size={420} stroke-width={0.6} class="pointer-events-none absolute -bottom-24 -left-24 -z-10 text-primary/[0.05]" aria-hidden="true" />
+      <div class="container-site grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
+        <div class="lg:sticky lg:top-28 lg:self-start">
+          <h2 id={p.cyber.id} class={titleCls}>
+            {p.cyber.title}
+          </h2>
+          <div class:list={['mt-6 text-lg leading-relaxed text-slate-700 [&_p]:m-0', linkStyle]} set:html={cyberLead} />
+          <div class="mt-8 flex gap-2" aria-hidden="true">
+            {cyberIcons.slice(0, 3).map((Icon, i) => (
+              <span class:list={['grid size-12 place-items-center rounded-2xl shadow-lift', tone(i + 2)]}>
+                <Icon size={22} />
+              </span>
+            ))}
+          </div>
+        </div>
+        <div class="space-y-4">
+          {cyberCards.map((html, i) => {
+            const Icon = cyberIcons[i % cyberIcons.length];
+            return (
+              <article class:list={['relative isolate overflow-hidden rounded-3xl bg-white p-6 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift sm:p-7', i % 2 === 1 && 'lg:ml-10']}>
+                <Icon size={140} stroke-width={1.1} class="pointer-events-none absolute -right-6 -bottom-8 -z-10 text-primary/[0.06]" aria-hidden="true" />
+                <div class="flex items-center gap-3">
+                  <span class:list={['grid size-11 place-items-center rounded-xl', tone(i)]}>
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
+                  <span class="h-px flex-1 bg-[repeating-linear-gradient(to_right,var(--brand-accent)_0_6px,transparent_6px_12px)]" aria-hidden="true" />
+                  <span class="font-display text-xs font-extrabold tracking-[0.14em] text-primary/60 tabular-nums">{pad(i + 2)}</span>
+                </div>
+                <div class:list={['mt-4 text-[16.5px] leading-relaxed text-slate-700 [&_p]:m-0', linkStyle]} set:html={html} />
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- 4. Choosing the Right Antivirus: question banner + criteria tiles -->
+{
+  p.antivirus && (
+    <section class="section bg-white">
+      <div class="container-site">
+        <h2 id={p.antivirus.id} class={titleCls}>
+          {p.antivirus.title}
+        </h2>
+        {avQuestion && (
+          <div class="relative isolate mt-8 flex items-center gap-5 overflow-hidden rounded-3xl rounded-bl-md bg-accent p-6 text-ink sm:p-8">
+            <ShieldQuestionMark size={160} stroke-width={1.1} class="pointer-events-none absolute -right-6 -bottom-10 -z-10 text-ink/[0.08]" aria-hidden="true" />
+            <span class="hidden size-14 shrink-0 place-items-center rounded-2xl bg-ink text-accent sm:grid">
+              <ShieldQuestionMark size={26} aria-hidden="true" />
+            </span>
+            <div class="font-display text-xl leading-snug font-extrabold sm:text-2xl [&_p]:m-0" set:html={avQuestion} />
+          </div>
+        )}
+        <ul class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2" role="list">
+          {avParas.map((html, i) => {
+            const Icon = avIcons[i % avIcons.length];
+            const dark = i === 0 || i === 2;
+            return (
+              <li class:list={['relative isolate overflow-hidden rounded-3xl p-6 transition hover:-translate-y-0.5 hover:shadow-lift sm:p-7', avTiles[i % avTiles.length]]}>
+                <div class="flex items-center gap-4">
+                  <!-- gauge (decoration): draws in when the tile scrolls into view -->
+                  <svg viewBox="0 0 64 40" class="av-gauge h-10 w-16 shrink-0" fill="none" stroke-linecap="round" aria-hidden="true">
+                    <path d="M6 36 A26 26 0 0 1 58 36" stroke-width="6" class={dark ? 'stroke-white/15' : 'stroke-primary/15'} />
+                    <path d="M6 36 A26 26 0 0 1 58 36" stroke-width="6" pathLength="100" class="av-gauge-fill stroke-accent" />
+                    <circle cx="32" cy="36" r="4" class={dark ? 'fill-white' : 'fill-ink'} />
+                  </svg>
+                  <div class="flex-1">
+                    {avLabels[i] && <p class="font-display text-xl font-extrabold">{avLabels[i]}</p>}
+                  </div>
+                  <span class:list={['grid size-11 shrink-0 place-items-center rounded-xl', dark ? 'bg-accent text-ink' : 'bg-primary text-white']}>
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
+                </div>
+                <div class:list={['mt-4 text-[16.5px] leading-relaxed [&_p]:m-0', dark ? 'text-white/85' : 'text-slate-700', !dark && linkStyle]} set:html={html} />
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<!-- 5. Daily Security Practices: staggered routine -->
+{
+  p.daily && (
+    <section class="section relative isolate overflow-x-clip bg-primary-tint">
+      <div class="container-site">
+        <div class="flex flex-wrap items-end justify-between gap-6">
+          <h2 id={p.daily.id} class={titleCls}>
+            {p.daily.title}
+          </h2>
+          <!-- seven days, all ticked (decoration) -->
+          <div class="flex gap-1.5" aria-hidden="true">
+            {Array.from({ length: 7 }, (_, i) => (
+              <span class:list={['day grid size-8 place-items-center rounded-lg', i === 6 ? 'bg-accent text-ink' : 'bg-white text-primary ring-1 ring-primary/15']} style={`--d:${i * 0.18}s`}>
+                <Check size={14} stroke-width={3} />
+              </span>
+            ))}
+          </div>
+        </div>
+        <div class="relative mt-10">
+          <span
+            class="pointer-events-none absolute top-[27px] right-6 left-6 hidden h-0.5 bg-[repeating-linear-gradient(to_right,var(--brand-accent)_0_8px,transparent_8px_16px)] xl:block"
+            aria-hidden="true"
+          />
+        <ol class="relative grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4 xl:pb-10" role="list">
+          {p.daily.paras.map((html, i) => {
+            const Icon = dailyIcons[i % dailyIcons.length];
+            return (
+              <li class:list={['relative', i % 2 === 1 && 'xl:translate-y-10']}>
+                <span class:list={['relative z-10 grid size-14 place-items-center rounded-2xl shadow-lift ring-4 ring-primary-tint', tone(i)]}>
+                  <Icon size={24} aria-hidden="true" />
+                </span>
+                <div class="mt-4 rounded-3xl bg-white p-6 ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift">
+                  <p class="font-display text-xs font-extrabold tracking-[0.14em] text-primary/60 tabular-nums">{pad(i + 1)}</p>
+                  {dailyLabels[i] && <p class="mt-1 font-display text-lg font-extrabold text-ink">{dailyLabels[i]}</p>}
+                  <div class:list={['mt-3 text-[16px] leading-relaxed text-slate-700 [&_p]:m-0', linkStyle]} set:html={html} />
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- 6. Dark blueprint: symptom checker -->
+{
+  p.symptoms && (
+    <section class="section relative isolate overflow-x-clip bg-ink text-white" data-checker>
+      <div
+        class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px]"
+        aria-hidden="true"
+      />
+      <div class="pointer-events-none absolute -bottom-40 -left-40 -z-10 size-[36rem] rounded-full bg-primary/40 blur-3xl" aria-hidden="true" />
+      <div class="container-site grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)] lg:gap-12">
+        <div>
+          <h2 id={p.symptoms.id} class="font-display text-3xl font-extrabold text-white sm:text-4xl">
+            {p.symptoms.title}
+          </h2>
+          <ul class="mt-8 space-y-4" role="list">
+            {symptomParas.map((html, i) => {
+              const Icon = symptomIcons[i % symptomIcons.length];
+              return (
+                <li class="sc-card rounded-3xl bg-white/[0.04] ring-1 ring-white/10 transition" data-sc-card>
+                  <button
+                    type="button"
+                    aria-pressed="false"
+                    data-sc-btn
+                    class="group flex w-full items-center gap-4 rounded-t-3xl p-5 text-left sm:px-6"
+                  >
+                    <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-cta/15 text-cta transition group-aria-pressed:bg-cta group-aria-pressed:text-white">
+                      <Icon size={20} aria-hidden="true" />
+                    </span>
+                    <span class="flex-1 font-display text-lg font-extrabold">{symptomLabels[i] ?? `${pad(i + 1)}`}</span>
+                    <span class="grid size-8 shrink-0 place-items-center rounded-lg ring-2 ring-white/30 transition group-aria-pressed:bg-accent group-aria-pressed:ring-accent">
+                      <Check size={16} stroke-width={3.5} class="text-ink opacity-0 transition group-aria-pressed:opacity-100" aria-hidden="true" />
+                    </span>
+                    <span class="sr-only">(I see this)</span>
+                  </button>
+                  <div class="px-5 pb-6 text-[16.5px] leading-relaxed text-white/80 sm:pl-[5.25rem] sm:pr-8 [&_p]:m-0" set:html={html} />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <!-- diagnosis gauge -->
+        <div class="lg:sticky lg:top-28">
+          <div class="relative isolate overflow-hidden rounded-3xl bg-primary-deep p-6 shadow-panel ring-1 ring-white/10 sm:p-7">
+            <Microscope size={160} stroke-width={1} class="pointer-events-none absolute -right-8 -bottom-10 -z-10 text-white/[0.05]" aria-hidden="true" />
+            <p class="font-display text-xs font-extrabold tracking-[0.18em] text-accent">SIGNS SPOTTED</p>
+            <svg viewBox="0 0 220 128" class="mt-4 w-full" fill="none" stroke-linecap="round" aria-hidden="true">
+              <path d="M20 112 A90 90 0 0 1 200 112" stroke="white" stroke-opacity="0.12" stroke-width="16" />
+              <path d="M20 112 A90 90 0 0 1 64 35" stroke="var(--brand-accent)" stroke-width="16" />
+              <path d="M70 31 A90 90 0 0 1 150 31" stroke="var(--brand-accent)" stroke-opacity="0.55" stroke-width="16" />
+              <path d="M156 35 A90 90 0 0 1 200 112" stroke="var(--brand-cta)" stroke-width="16" />
+              <g class="sc-needle" data-sc-needle style="--a:-90deg">
+                <path d="M110 112 L110 36" stroke="white" stroke-width="4" />
+              </g>
+              <circle cx="110" cy="112" r="9" fill="white" />
+              <circle cx="110" cy="112" r="4" fill="var(--brand-ink)" />
+            </svg>
+            <p class="mt-2 text-center font-display text-4xl font-extrabold tabular-nums">
+              <span data-sc-count>0</span><span class="text-white/40">/{symptomParas.length}</span>
+            </p>
+            {symptomNext && <div class="mt-5 text-[16px] leading-relaxed text-white/80 [&_p]:m-0" set:html={symptomNext} />}
+            <div class="mt-6 flex flex-col gap-3">
+              <a href={`tel:${site.phone.tel}`} class="sc-call btn-cta min-h-13 px-6" data-sc-call>
+                <Phone size={18} aria-hidden="true" /> Call {site.phone.display}
+              </a>
+              {p.removal && (
+                <a href={`#${p.removal.id}`} class="btn-outline-light min-h-13 px-6">
+                  {p.removal.title} <ArrowDown size={18} aria-hidden="true" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- 7. Comprehensive Removal Process: pipeline -->
+{
+  p.removal && (
+    <section class="section bg-white">
+      <div class="container-site">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-end lg:gap-14">
+          <h2 id={p.removal.id} class={titleCls}>
+            {p.removal.title}
+          </h2>
+          <div class:list={['text-lg leading-relaxed text-slate-700 [&_p]:m-0', linkStyle]} set:html={removalLead} />
+        </div>
+
+        <div class="relative mt-12" data-pipe>
+          <span class="pointer-events-none absolute top-7 right-[16%] left-[16%] hidden h-1 overflow-hidden rounded-full bg-primary-tint lg:block" aria-hidden="true">
+            <span class="pipe-fill block h-full w-full rounded-full bg-accent" />
+          </span>
+        <ol class="relative grid grid-cols-1 gap-6 lg:grid-cols-3" role="list">
+          {removalMid.map((html, i) => {
+            const Icon = stageIcons[i % stageIcons.length];
+            return (
+              <li class="relative flex gap-5 lg:block">
+                <div class="relative z-10 flex shrink-0 lg:justify-center">
+                  <span class:list={['grid size-14 place-items-center rounded-full shadow-lift ring-8 ring-white', tone(i)]}>
+                    <Icon size={24} aria-hidden="true" />
+                  </span>
+                </div>
+                <div class="flex-1 rounded-3xl bg-primary-tint p-6 ring-1 ring-primary/10 transition hover:-translate-y-0.5 hover:shadow-lift lg:mt-6">
+                  <p class="font-display text-lg font-extrabold text-ink">
+                    <span class="mr-2 text-cta tabular-nums">{pad(i + 1)}</span>
+                    {stageLabels[i]}
+                  </p>
+                  <div class:list={['mt-3 text-[16px] leading-relaxed text-slate-700 [&_p]:m-0', linkStyle]} set:html={html} />
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+        </div>
+
+        {removalGoal && (
+          <div class="relative isolate mt-8 flex items-center gap-5 overflow-hidden rounded-3xl bg-primary p-6 text-white sm:p-8">
+            <BadgeCheck size={150} stroke-width={1.1} class="pointer-events-none absolute -right-6 -bottom-10 -z-10 text-white/[0.07]" aria-hidden="true" />
+            <span class="grid size-14 shrink-0 place-items-center rounded-2xl bg-accent text-ink">
+              <ShieldCheck size={26} aria-hidden="true" />
+            </span>
+            <div class="font-display text-lg leading-snug font-bold sm:text-xl [&_p]:m-0" set:html={removalGoal} />
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+<!-- 8. Maintaining Ongoing Protection: security settings window -->
+{
+  p.protection && (
+    <section class="section bg-primary-tint">
+      <div class="container-site grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
+        <div>
+          <h2 id={p.protection.id} class={titleCls}>
+            {p.protection.title}
+          </h2>
+          <div class:list={['mt-6 text-lg leading-relaxed text-slate-700 [&_p]:m-0', linkStyle]} set:html={p.protection.leadHtml} />
+          {p.protection.outroHtml && (
+            <div class="mt-6 flex items-start gap-4 rounded-2xl bg-white p-5 ring-1 ring-slate-200">
+              <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-cta text-white">
+                <Eye size={20} aria-hidden="true" />
+              </span>
+              <div class:list={['text-[16.5px] leading-relaxed font-semibold text-ink [&_p]:m-0', linkStyle]} set:html={p.protection.outroHtml} />
+            </div>
+          )}
+        </div>
+
+        <div class="overflow-hidden rounded-3xl bg-ink text-white shadow-panel ring-1 ring-ink/10">
+          <!-- title bar -->
+          <div class="flex items-center gap-3 border-b border-white/10 px-5 py-4">
+            <div class="flex gap-2" aria-hidden="true">
+              <span class="size-3 rounded-full bg-cta" />
+              <span class="size-3 rounded-full bg-accent" />
+              <span class="size-3 rounded-full bg-white/30" />
+            </div>
+            <Settings size={16} class="ml-2 text-white/50" aria-hidden="true" />
+            <span class="h-1.5 w-28 rounded-full bg-white/15" aria-hidden="true" />
+          </div>
+
+          <div class="divide-y divide-white/10">
+            {p.protection.first && (
+              <div class="flex items-start gap-4 p-5 sm:p-6">
+                <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-ink">
+                  <ShieldCheck size={20} aria-hidden="true" />
+                </span>
+                <p class="flex-1 text-[16.5px] leading-relaxed font-semibold text-white/90" set:html={p.protection.first} />
+              </div>
+            )}
+            {p.protection.groups.map((g, gi) => (
+              <div class="p-5 sm:p-6">
+                <div class="flex items-center gap-4">
+                  <span class:list={['grid size-11 shrink-0 place-items-center rounded-xl', gi === 0 ? 'bg-primary text-white ring-1 ring-white/20' : 'bg-cta text-white']}>
+                    {gi === 0 ? <Settings size={20} aria-hidden="true" /> : <ScanSearch size={20} aria-hidden="true" />}
+                  </span>
+                  <p class="flex-1 font-display text-lg font-extrabold" set:html={g.name} />
+                  <!-- switch, on (decoration) -->
+                  <span class="toggle relative h-7 w-12 shrink-0 rounded-full bg-accent" aria-hidden="true">
+                    <span class="absolute top-1 right-1 size-5 rounded-full bg-ink" />
+                  </span>
+                </div>
+                <ul class="mt-4 space-y-2.5 sm:pl-[3.75rem]" role="list">
+                  {g.items.map((it) => (
+                    <li class="flex gap-3 text-[16px] leading-snug text-white/85">
+                      <span class="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-accent text-ink">
+                        <Check size={12} stroke-width={3.5} aria-hidden="true" />
+                      </span>
+                      <span set:html={it} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            {p.protection.flat.length > 0 && (
+              <ul class="space-y-3 p-5 sm:p-6" role="list">
+                {p.protection.flat.map((it) => (
+                  <li class="flex gap-3 text-[16px] leading-snug text-white/85">
+                    <span class="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-accent text-ink">
+                      <Check size={12} stroke-width={3.5} aria-hidden="true" />
+                    </span>
+                    <span set:html={it} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- 9. FAQ -->
+{
+  p.faq && (
+    <section class="section bg-white" aria-labelledby={p.faq.id}>
+      <div class="container-site grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.6fr)] lg:gap-12">
+        <div class="lg:sticky lg:top-28 lg:self-start">
+          <h2 id={p.faq.id} class={titleCls}>
+            {p.faq.title}
+          </h2>
+          <div class="relative isolate mt-8 overflow-hidden rounded-3xl bg-primary p-6 text-white">
+            <ShieldQuestionMark size={130} stroke-width={1.1} class="pointer-events-none absolute -right-6 -bottom-8 -z-10 text-white/[0.08]" aria-hidden="true" />
+            <div class="flex flex-col gap-3">
+              <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6">
+                <Phone size={18} aria-hidden="true" /> Call {site.phone.display}
+              </a>
+              <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6">
+                <FileText size={18} aria-hidden="true" /> Get a Quote
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          {p.faq.main.map((f, i) => (
+            <details name="vnl-faq" class="group rounded-2xl bg-primary-tint ring-1 ring-primary/10 transition open:bg-white open:shadow-lift open:ring-primary/30" open={i === 0}>
+              <summary class="flex cursor-pointer list-none items-center gap-4 p-5 sm:p-6 [&::-webkit-details-marker]:hidden">
+                <span class:list={['grid size-10 shrink-0 place-items-center rounded-xl font-display text-sm font-extrabold tabular-nums', tone(i)]}>{pad(i + 1)}</span>
+                <h3 id={f.id} class="flex-1 font-display text-lg font-bold text-ink transition-colors group-hover:text-primary">
+                  {f.q}
+                </h3>
+                <span class="grid size-9 shrink-0 place-items-center rounded-full bg-white text-primary transition group-open:rotate-45 group-open:bg-primary group-open:text-white">
+                  <Plus size={18} aria-hidden="true" />
+                </span>
+              </summary>
+              <div class:list={['space-y-4 px-5 pb-6 leading-relaxed text-slate-600 sm:pl-[5.25rem] sm:pr-16', linkStyle]} set:html={f.html} />
+            </details>
+          ))}
+          {p.faq.more.length > 0 && (
+            <ol class="space-y-3 pt-4" role="list">
+              {p.faq.more.map((f, i) => (
+                <li>
+                  <details name="vnl-faq" class="group rounded-2xl bg-primary-tint ring-1 ring-primary/10 transition open:bg-white open:shadow-lift">
+                    <summary class="flex cursor-pointer list-none items-center gap-4 p-4 [&::-webkit-details-marker]:hidden">
+                      <span class:list={['grid size-9 shrink-0 place-items-center rounded-lg font-display text-sm font-extrabold tabular-nums', tone(i)]}>{f.n}</span>
+                      <span class="flex-1 font-display text-[15.5px] leading-snug font-bold text-ink">{f.q}</span>
+                      <span class="grid size-8 shrink-0 place-items-center rounded-full bg-white text-primary transition group-open:rotate-45 group-open:bg-primary group-open:text-white">
+                        <Plus size={16} aria-hidden="true" />
+                      </span>
+                    </summary>
+                    <div class:list={['px-4 pb-5 text-[15.5px] leading-relaxed text-slate-600 sm:pl-[4.25rem] [&_p]:m-0', linkStyle]} set:html={f.html} />
+                  </details>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- Any section this layout doesn't know about (never drop content) -->
+{
+  p.extra.map((s) => (
+    <section class="section bg-white">
+      <div class="container-site">
+        <h2 id={s.id} class={titleCls}>
+          {s.title}
+        </h2>
+        <div class:list={['mt-6 max-w-3xl space-y-5 text-lg leading-relaxed text-slate-700', linkStyle]} set:html={s.html} />
+      </div>
+    </section>
+  ))
+}
+
+<CtaBand />
+
+<style>
+  /* Findings header bars fill one after another */
+  .kt-bar > span {
+    transform-origin: left center;
+    animation: kt-fill 4s ease-in-out infinite;
+    animation-delay: var(--d);
+  }
+  @keyframes kt-fill {
+    0% {
+      transform: scaleX(0);
+    }
+    30%,
+    85% {
+      transform: scaleX(1);
+    }
+    100% {
+      transform: scaleX(0);
+    }
+  }
+  .day {
+    animation: day-pop 4.2s ease-in-out infinite;
+    animation-delay: var(--d);
+  }
+  @keyframes day-pop {
+    0%,
+    100% {
+      transform: none;
+    }
+    8% {
+      transform: translateY(-3px);
+    }
+    16% {
+      transform: none;
+    }
+  }
+
+  /* antivirus gauges + removal line: draw in when scrolled into view (JS adds .is-in) */
+  .av-gauge-fill {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.3, 0, 0.2, 1);
+  }
+  :global(.js) .av-gauge:not(.is-in) .av-gauge-fill {
+    stroke-dashoffset: 100;
+  }
+  .pipe-fill {
+    transform-origin: left center;
+    transition: transform 1.6s cubic-bezier(0.3, 0, 0.2, 1);
+  }
+  :global(.js) [data-pipe]:not(.is-in) .pipe-fill {
+    transform: scaleX(0);
+  }
+
+  /* symptom checker */
+  .sc-needle {
+    transform-origin: 110px 112px;
+    transform: rotate(var(--a));
+    transition: transform 0.6s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+  .sc-card:has([aria-pressed='true']) {
+    background: rgb(255 255 255 / 0.08);
+    box-shadow: inset 0 0 0 2px var(--brand-accent);
+  }
+  .sc-call.is-hot {
+    animation: sc-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes sc-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--brand-cta), transparent 40%);
+    }
+    50% {
+      box-shadow: 0 0 0 10px color-mix(in oklab, var(--brand-cta), transparent 100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .day,
+    .kt-bar > span,
+    .sc-call.is-hot {
+      animation: none;
+    }
+    .av-gauge-fill,
+    .pipe-fill,
+    .sc-needle {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Draw the gauges / pipeline line once they scroll into view
+  const targets = document.querySelectorAll<Element>('.av-gauge, [data-pipe]');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-in');
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.4 },
+    );
+    targets.forEach((t) => io.observe(t));
+  } else {
+    targets.forEach((t) => t.classList.add('is-in'));
+  }
+
+  // Symptom checker: tick what you see, the needle moves (-90deg = none, +90deg = all)
+  for (const root of document.querySelectorAll<HTMLElement>('[data-checker]')) {
+    const btns = [...root.querySelectorAll<HTMLButtonElement>('[data-sc-btn]')];
+    const needle = root.querySelector<SVGGElement>('[data-sc-needle]');
+    const count = root.querySelector<HTMLElement>('[data-sc-count]');
+    const call = root.querySelector<HTMLElement>('[data-sc-call]');
+    const update = () => {
+      const n = btns.filter((b) => b.getAttribute('aria-pressed') === 'true').length;
+      const a = btns.length ? -90 + (180 * n) / btns.length : -90;
+      needle?.style.setProperty('--a', `${a}deg`);
+      if (count) count.textContent = String(n);
+      call?.classList.toggle('is-hot', n > 0);
+    };
+    btns.forEach((b) =>
+      b.addEventListener('click', () => {
+        b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'));
+        update();
+      }),
+    );
+    update();
+  }
+</script>
