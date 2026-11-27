@@ -1,0 +1,327 @@
+---
+/**
+ * Small blueprint drawing of one laptop part, for the brand pages' part cards. Same line style as the
+ * hero's repair bench: white lines, gold details, orange for heat. Each part has one small, quiet
+ * animation that shows the problem from the WordPress text:
+ *   lcd - the backlight flickers and a crack shows      inverter - the backlight tube flickers
+ *   keyboard - a key pops up                             touchpad - the cursor jitters
+ *   overheat - fan spins, heat rises                     motherboard - signals run along the traces
+ *   dcjack - the plug wobbles in a loose jack
+ * No text, no logos. Reduced motion: still drawings.
+ */
+import type { PartKey } from '../lib/brand';
+
+interface Props {
+  part?: PartKey;
+  class?: string;
+}
+const { part, class: className } = Astro.props;
+
+const keyRows = [0, 1, 2].map((r) => Array.from({ length: 9 }, (_, c) => ({ x: 22 + c * 13.2, y: 30 + r * 13 })));
+const blades = [0, 60, 120, 180, 240, 300];
+---
+
+<svg viewBox="0 0 160 100" class:list={['pg', className]} fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  {
+    part === 'lcd' && (
+      <g>
+        <rect x="28" y="8" width="104" height="72" rx="6" class="pg-shell" />
+        <rect x="36" y="15" width="88" height="56" rx="2" class="pg-screen pg-flicker" />
+        <path d="M84 15 l-8 14 l9 6 l-10 16 l6 6" class="pg-gold" />
+        <path d="M18 84 H142 L134 93 H26 Z" class="pg-shell" />
+      </g>
+    )
+  }
+  {
+    part === 'inverter' && (
+      <g>
+        <path d="M14 24 H146" class="pg-tube" />
+        <path d="M14 24 H146" class="pg-tube-glow pg-flicker" />
+        <rect x="18" y="46" width="124" height="22" rx="4" class="pg-board" />
+        <rect x="60" y="40" width="26" height="16" rx="2" class="pg-shell" />
+        <path d="M64 44 v8 M70 44 v8 M76 44 v8 M82 44 v8" class="pg-line" />
+        <circle cx="104" cy="57" r="5" class="pg-gold" />
+        <circle cx="120" cy="57" r="3.5" class="pg-gold" />
+        <rect x="32" y="52" width="12" height="10" rx="2" class="pg-line" />
+        <path d="M18 57 C6 57 6 80 22 84 H60" class="pg-line" />
+      </g>
+    )
+  }
+  {
+    part === 'keyboard' && (
+      <g>
+        <rect x="12" y="20" width="136" height="64" rx="7" class="pg-shell" />
+        {keyRows.flat().map((k, i) => (i === 13 ? null : <rect x={k.x} y={k.y} width="10.5" height="10" rx="2" class="pg-key" />))}
+        <rect x="44" y="69" width="72" height="9" rx="2" class="pg-key" />
+        <g class="pg-pop">
+          <rect x={keyRows[1][4].x} y={keyRows[1][4].y} width="10.5" height="10" rx="2" class="pg-key-gold" />
+        </g>
+      </g>
+    )
+  }
+  {
+    part === 'touchpad' && (
+      <g>
+        <rect x="36" y="12" width="88" height="66" rx="9" class="pg-shell" />
+        <path d="M36 66 H124 M80 66 V78" class="pg-line" />
+        <path d="M58 48 q10 -16 24 -8 t20 -10" class="pg-dash" />
+        <g class="pg-jitter">
+          <path d="M96 28 l0 16 l4 -4 l3 7 l3 -1.5 l-3 -7 l6 0 Z" class="pg-cursor" />
+        </g>
+      </g>
+    )
+  }
+  {
+    part === 'overheat' && (
+      <g>
+        <circle cx="58" cy="52" r="32" class="pg-shell" />
+        <g class="pg-spin">
+          {blades.map((a) => (
+            <path d="M58 52 q12 -8 8 -26" transform={`rotate(${a} 58 52)`} class="pg-line-strong" />
+          ))}
+        </g>
+        <circle cx="58" cy="52" r="6" class="pg-gold-fill" />
+        <g class="pg-heat">
+          <path d="M106 80 q-6 -8 0 -16 t0 -16 t0 -16" class="pg-hot" />
+          <path d="M122 80 q-6 -8 0 -16 t0 -16 t0 -16" class="pg-hot" />
+          <path d="M138 80 q-6 -8 0 -16 t0 -16 t0 -16" class="pg-hot" />
+        </g>
+      </g>
+    )
+  }
+  {
+    part === 'motherboard' && (
+      <g>
+        <rect x="12" y="10" width="136" height="80" rx="5" class="pg-board" />
+        <rect x="60" y="32" width="36" height="36" rx="3" class="pg-chip" />
+        <path d="M66 32 v-5 M74 32 v-5 M82 32 v-5 M90 32 v-5 M66 68 v5 M74 68 v5 M82 68 v5 M90 68 v5 M60 40 h-5 M60 50 h-5 M60 60 h-5 M96 40 h5 M96 50 h5 M96 60 h5" class="pg-line" />
+        <path d="M55 40 H30 V22 M55 60 H30 V78 M101 50 H130 M101 40 l10 -12 H134" class="pg-trace" />
+        <path d="M55 40 H30 V22 M101 50 H130" class="pg-signal" />
+        <circle cx="30" cy="22" r="3" class="pg-gold-fill" />
+        <circle cx="130" cy="50" r="3" class="pg-gold-fill" />
+        <circle cx="30" cy="78" r="3" class="pg-line" />
+        <rect x="112" y="64" width="20" height="14" rx="2" class="pg-line" />
+      </g>
+    )
+  }
+  {
+    part === 'dcjack' && (
+      <g>
+        <path d="M96 18 H150 V82 H96" class="pg-shell" />
+        <rect x="96" y="40" width="18" height="20" rx="3" class="pg-port" />
+        <circle cx="105" cy="50" r="3" class="pg-gold-fill" />
+        <g class="pg-wobble">
+          <path d="M4 50 H44" class="pg-cable" />
+          <rect x="44" y="40" width="30" height="20" rx="4" class="pg-plug" />
+          <rect x="74" y="45" width="18" height="10" rx="2" class="pg-gold" />
+        </g>
+        <path d="M84 30 l6 -6 M84 70 l6 6" class="pg-hot" />
+      </g>
+    )
+  }
+  {
+    !part && (
+      <g>
+        <rect x="30" y="14" width="100" height="60" rx="6" class="pg-shell" />
+        <path d="M18 80 H142 L134 90 H26 Z" class="pg-shell" />
+        <path d="M70 44 l8 8 l14 -16" class="pg-gold" />
+      </g>
+    )
+  }
+</svg>
+
+<style>
+  .pg .pg-shell {
+    fill: rgb(255 255 255 / 0.05);
+    stroke: rgb(255 255 255 / 0.6);
+    stroke-width: 1.8;
+  }
+  .pg .pg-screen {
+    fill: color-mix(in oklab, var(--brand-primary), white 12%);
+    fill-opacity: 0.55;
+  }
+  .pg .pg-board {
+    fill: color-mix(in oklab, var(--brand-ink), var(--brand-accent) 10%);
+    stroke: var(--brand-accent);
+    stroke-opacity: 0.7;
+    stroke-width: 1.6;
+  }
+  .pg .pg-chip {
+    fill: var(--brand-ink);
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+  }
+  .pg .pg-line {
+    stroke: rgb(255 255 255 / 0.5);
+    stroke-width: 1.4;
+  }
+  .pg .pg-line-strong {
+    stroke: rgb(255 255 255 / 0.75);
+    stroke-width: 2.2;
+  }
+  .pg .pg-gold {
+    stroke: var(--brand-accent);
+    stroke-width: 2.2;
+  }
+  .pg .pg-gold-fill {
+    fill: var(--brand-accent);
+  }
+  .pg .pg-trace {
+    stroke: var(--brand-accent);
+    stroke-opacity: 0.45;
+    stroke-width: 1.6;
+  }
+  .pg .pg-signal {
+    stroke: var(--brand-accent);
+    stroke-width: 2.4;
+    stroke-dasharray: 8 60;
+    animation: pg-signal 2.2s linear infinite;
+  }
+  .pg .pg-key {
+    fill: rgb(255 255 255 / 0.06);
+    stroke: rgb(255 255 255 / 0.45);
+    stroke-width: 1;
+  }
+  .pg .pg-key-gold {
+    fill: var(--brand-accent);
+    stroke: var(--brand-accent);
+  }
+  .pg .pg-tube {
+    stroke: rgb(255 255 255 / 0.25);
+    stroke-width: 6;
+  }
+  .pg .pg-tube-glow {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .pg .pg-dash {
+    stroke: rgb(255 255 255 / 0.4);
+    stroke-width: 1.4;
+    stroke-dasharray: 3 4;
+  }
+  .pg .pg-cursor {
+    fill: var(--brand-accent);
+    stroke: var(--brand-ink);
+    stroke-width: 1;
+  }
+  .pg .pg-hot {
+    stroke: var(--brand-cta);
+    stroke-width: 2.4;
+  }
+  .pg .pg-port {
+    fill: var(--brand-ink);
+    stroke: rgb(255 255 255 / 0.6);
+    stroke-width: 1.6;
+  }
+  .pg .pg-cable {
+    stroke: rgb(255 255 255 / 0.55);
+    stroke-width: 4;
+  }
+  .pg .pg-plug {
+    fill: rgb(255 255 255 / 0.85);
+  }
+
+  /* motion */
+  .pg .pg-flicker {
+    animation: pg-flicker 3.2s steps(1) infinite;
+  }
+  .pg .pg-pop {
+    animation: pg-pop 2.4s ease-in-out infinite;
+  }
+  .pg .pg-jitter {
+    animation: pg-jitter 1.6s steps(1) infinite;
+  }
+  .pg .pg-spin {
+    transform-origin: 58px 52px;
+    animation: pg-spin 1.4s linear infinite;
+  }
+  .pg .pg-heat {
+    animation: pg-heat 1.8s ease-in-out infinite;
+  }
+  .pg .pg-wobble {
+    transform-origin: 74px 50px;
+    animation: pg-wobble 1.6s ease-in-out infinite;
+  }
+  @keyframes pg-flicker {
+    0%,
+    60%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    62%,
+    68%,
+    76% {
+      opacity: 0.25;
+    }
+  }
+  @keyframes pg-pop {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    40%,
+    60% {
+      transform: translate(3px, -16px) rotate(-14deg);
+    }
+  }
+  @keyframes pg-jitter {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    20% {
+      transform: translate(-6px, 4px);
+    }
+    40% {
+      transform: translate(5px, -3px);
+    }
+    60% {
+      transform: translate(-3px, -5px);
+    }
+    80% {
+      transform: translate(4px, 5px);
+    }
+  }
+  @keyframes pg-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes pg-heat {
+    0%,
+    100% {
+      transform: translateY(2px);
+      opacity: 0.55;
+    }
+    50% {
+      transform: translateY(-4px);
+      opacity: 1;
+    }
+  }
+  @keyframes pg-wobble {
+    0%,
+    100% {
+      transform: translateX(0) rotate(0);
+    }
+    35% {
+      transform: translateX(-6px) rotate(-5deg);
+    }
+    70% {
+      transform: translateX(-2px) rotate(4deg);
+    }
+  }
+  @keyframes pg-signal {
+    from {
+      stroke-dashoffset: 68;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pg * {
+      animation: none !important;
+    }
+  }
+</style>

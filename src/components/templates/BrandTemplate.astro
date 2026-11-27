@@ -1,0 +1,501 @@
+---
+// Laptop brand pages (/dell-laptop-common-problems/ first; Acer, ASUS, HP, Lenovo share the structure).
+// Words come from the exported WordPress page (src/lib/brand.ts) - nothing is typed here except a few
+// short UI labels ("Parts we fix", "Repair menu", search placeholders, button text).
+// Layout:
+//   1. Hero: the "repair bench" (HeroBrandBench) with the brand's real logo on the repair tag.
+//   2. Intro + "parts bin": one card per "###" part, each with its own small animated drawing
+//      (PartGlyph). A "Contact ..." line becomes an orange call tile. Call card pinned on the right.
+//   3. Dark blueprint: the repair lists as a "repair menu" console - tabs (the WordPress labels),
+//      live search, an icon per item. Without JS both lists show.
+//   4. Areas we serve: two boxes of suburb pills + live suburb search.
+import AppWindow from '@lucide/astro/icons/app-window';
+import Bug from '@lucide/astro/icons/bug';
+import Check from '@lucide/astro/icons/check';
+import CircuitBoard from '@lucide/astro/icons/circuit-board';
+import Cpu from '@lucide/astro/icons/cpu';
+import DatabaseBackup from '@lucide/astro/icons/database-backup';
+import Disc from '@lucide/astro/icons/disc';
+import Droplets from '@lucide/astro/icons/droplets';
+import Fan from '@lucide/astro/icons/fan';
+import FileText from '@lucide/astro/icons/file-text';
+import Gauge from '@lucide/astro/icons/gauge';
+import HardDrive from '@lucide/astro/icons/hard-drive';
+import Keyboard from '@lucide/astro/icons/keyboard';
+import Laptop from '@lucide/astro/icons/laptop';
+import MapPin from '@lucide/astro/icons/map-pin';
+import MemoryStick from '@lucide/astro/icons/memory-stick';
+import Monitor from '@lucide/astro/icons/monitor';
+import MonitorX from '@lucide/astro/icons/monitor-x';
+import Phone from '@lucide/astro/icons/phone';
+import PlugZap from '@lucide/astro/icons/plug-zap';
+import Power from '@lucide/astro/icons/power';
+import RefreshCw from '@lucide/astro/icons/refresh-cw';
+import Search from '@lucide/astro/icons/search';
+import Wind from '@lucide/astro/icons/wind';
+import Wrench from '@lucide/astro/icons/wrench';
+import CtaBand from '../CtaBand.astro';
+import HeroBrandBench from '../HeroBrandBench.astro';
+import PartGlyph from '../PartGlyph.astro';
+import SideCallCard from '../SideCallCard.astro';
+import { site } from '../../config/site';
+import { brandFacts, brandLogo, brandParts, brandSections } from '../../lib/brand';
+
+interface Props {
+  data: { slug: string };
+  heading: string; // the page's single H1 (the WordPress page had none, so this is the page title)
+  body: string; // raw exported markdown of the page
+}
+const { data, heading, body } = Astro.props;
+const parts = brandParts(body);
+const facts = brandFacts(body);
+const logo = brandLogo(data.slug);
+const brand = heading.split(' ')[0];
+// "... Common Problems" at the end of the H1 is picked out in gold (same words, same order)
+const split = heading.match(/^(.+?)\s+(Common Problems)$/i);
+const p = await brandSections(body);
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const linkStyle =
+  '[&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:decoration-accent [&_a]:decoration-2 [&_a]:underline-offset-4';
+const titleCls = 'font-display text-3xl font-extrabold text-primary sm:text-4xl';
+const gridBg =
+  'pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:24px_24px]';
+const panels = ['bg-ink', 'bg-primary', 'bg-primary-deep'];
+
+// An icon for each repair-list item, picked from its own words (fallback: a wrench)
+const plain = (html: string) => html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+const ICONS: [RegExp, typeof Bug][] = [
+  [/virus|spyware|popup/i, Bug],
+  [/backup|transfer|rescue/i, DatabaseBackup],
+  [/operating system/i, RefreshCw],
+  [/slow/i, Gauge],
+  [/blue screen|freezing/i, MonitorX],
+  [/driver/i, Cpu],
+  [/not turning on/i, Power],
+  [/gpu|graphics/i, Cpu],
+  [/motherboard|component/i, CircuitBoard],
+  [/over heating|overheat/i, Fan],
+  [/keyboard/i, Keyboard],
+  [/power|jack/i, PlugZap],
+  [/hinge|plastic|cover/i, Laptop],
+  [/optical|dvd/i, Disc],
+  [/memory/i, MemoryStick],
+  [/liquid|spill/i, Droplets],
+  [/dust|cleaning/i, Wind],
+  [/hard drive/i, HardDrive],
+  [/lcd|screen|display|backlight|bulb|monitor/i, Monitor],
+];
+const itemIcon = (html: string) => ICONS.find(([re]) => re.test(plain(html)))?.[1] ?? Wrench;
+const listIcon = (kind: string) => (kind === 'software' ? AppWindow : kind === 'hardware' ? Cpu : Wrench);
+const allSuburbs = p.areas.reduce((n, a) => n + a.links.length, 0);
+---
+
+<!-- 1. Hero -->
+<section class="relative isolate overflow-hidden bg-primary text-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.09] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px] [mask-image:linear-gradient(to_right,transparent,black_45%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="pointer-events-none absolute -top-40 -left-40 -z-10 size-[34rem] rounded-full bg-accent/[0.08] blur-3xl" aria-hidden="true"></div>
+  <div class="pointer-events-none absolute -right-32 -bottom-48 -z-10 size-[30rem] rounded-full bg-cta/[0.10] blur-3xl" aria-hidden="true"></div>
+
+  <div class="container-site grid grid-cols-1 items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 lg:py-16">
+    <div>
+      <h1 class="font-display text-[2.5rem] leading-[1.02] font-extrabold tracking-[-0.02em] text-white sm:text-6xl xl:text-[4.1rem]">
+        {
+          split ? (
+            <>
+              {split[1]}{' '}
+              <span class="relative inline-block text-accent">
+                {split[2]}
+                <svg class="absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M2 9 C 50 2, 150 2, 198 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                </svg>
+              </span>
+            </>
+          ) : (
+            heading
+          )
+        }
+      </h1>
+
+      {
+        facts.length > 0 && (
+          <ul class="mt-8 space-y-2.5" role="list">
+            {facts.map((f) => (
+              <li class="flex items-center gap-3 text-lg text-white/90">
+                <span class="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-ink">
+                  <Check size={14} stroke-width={3.5} aria-hidden="true" />
+                </span>
+                <span class="first-letter:uppercase">{f}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+        <a href={`tel:${site.phone.tel}`} class="btn-cta min-h-13 px-6 text-base sm:text-lg">
+          <Phone size={19} aria-hidden="true" /> Call {site.phone.display}
+        </a>
+        <a href={site.quoteUrl} class="btn-outline-light min-h-13 px-6 text-base sm:text-lg">
+          <FileText size={18} aria-hidden="true" /> Get a Quote
+        </a>
+      </div>
+    </div>
+    <div class="w-full">
+      <HeroBrandBench parts={parts} logo={logo} brand={brand} />
+    </div>
+  </div>
+</section>
+
+<!-- 2. Intro + parts bin, call card pinned on the right -->
+<section class="section relative isolate overflow-x-clip bg-white">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 opacity-60 [background-image:radial-gradient(color-mix(in_oklab,var(--brand-primary),transparent_84%)_1.2px,transparent_1.2px)] [background-size:22px_22px] [mask-image:linear-gradient(to_left,black,transparent_60%)]"
+    aria-hidden="true"
+  >
+  </div>
+  <div class="container-site grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+    <div class="min-w-0">
+      {
+        p.intro.length > 0 && (
+          <div class="relative pl-6">
+            <span class="absolute top-1 bottom-1 left-0 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+            <div
+              class:list={[
+                'space-y-5 font-display text-xl leading-snug font-bold text-ink sm:text-2xl [&_strong]:text-primary',
+                linkStyle,
+              ]}
+              set:html={p.intro.join('')}
+            />
+          </div>
+        )
+      }
+
+      {
+        p.parts.length > 0 && (
+          <div class="mt-12">
+            <p class="flex items-center gap-3 font-display text-xs font-extrabold tracking-[0.18em] text-cta uppercase">
+              <span class="h-0.5 w-8 rounded-full bg-cta" aria-hidden="true" /> Parts we fix
+            </p>
+            <div class="mt-6 grid grid-cols-1 gap-5 md:grid-flow-dense md:grid-cols-2">
+              {p.parts.map((part, i) => {
+                const wide = part.key === 'lcd';
+                return (
+                  <>
+                    <article
+                      class:list={[
+                        'group overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lift',
+                        wide ? 'md:col-span-2 md:grid md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]' : 'flex flex-col',
+                      ]}
+                    >
+                      <!-- the drawing panel grows to fill any extra height, so a card with less text never has an empty gap -->
+                      <div class:list={['relative isolate flex min-h-40 items-center justify-center overflow-hidden px-6 py-6', panels[i % panels.length], wide ? 'md:py-10' : 'flex-1']}>
+                        <div class={gridBg} aria-hidden="true" />
+                        <span class="absolute top-4 left-4 font-display text-xs font-extrabold tracking-[0.14em] text-white/50 tabular-nums">{pad(i + 1)}</span>
+                        <span class:list={['absolute top-4 right-4 size-2.5 rounded-full', ['bg-accent', 'bg-cta', 'bg-white/60'][i % 3]]} aria-hidden="true" />
+                        <PartGlyph part={part.key} class="h-28 w-auto transition duration-300 group-hover:scale-105 sm:h-32" />
+                      </div>
+                      <div class="p-6 sm:p-7">
+                        <h3 id={part.id} class="scroll-mt-28 font-display text-xl font-extrabold text-ink sm:text-2xl">
+                          {part.title}
+                        </h3>
+                        <div class:list={['mt-3 space-y-4 text-[16.5px] leading-relaxed text-slate-700', linkStyle]} set:html={part.paras.join('')} />
+                      </div>
+                    </article>
+                    {part.contact && (
+                      <div class="relative isolate flex flex-col gap-5 overflow-hidden rounded-3xl bg-cta p-6 text-white sm:flex-row sm:items-center sm:p-7 md:col-span-2">
+                        <Phone size={150} stroke-width={1.1} class="pointer-events-none absolute -right-6 -bottom-10 -z-10 text-white/[0.09]" aria-hidden="true" />
+                        <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-white text-cta">
+                          <Phone size={22} aria-hidden="true" />
+                        </span>
+                        <div class="flex-1 font-display text-lg leading-snug font-bold sm:text-xl [&_p]:m-0" set:html={part.contact} />
+                        <a href={`tel:${site.phone.tel}`} class="btn min-h-13 shrink-0 bg-white px-6 text-cta hover:brightness-95">
+                          <Phone size={18} aria-hidden="true" /> Call {site.phone.display}
+                        </a>
+                      </div>
+                    )}
+                  </>
+                );
+              })}
+            </div>
+          </div>
+        )
+      }
+    </div>
+
+    <!-- the column runs the full height of the section, so the card stays pinned while you scroll -->
+    <div>
+      <div class="lg:sticky lg:top-28">
+        <SideCallCard heading="Talk to a local technician" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Dark blueprint: the repair menu console -->
+{
+  p.lists.length > 0 && (
+    <section class="section relative isolate overflow-x-clip bg-ink text-white" aria-label="Repair menu" data-menu>
+      <div
+        class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:36px_36px]"
+        aria-hidden="true"
+      />
+      <div class="pointer-events-none absolute -top-40 -right-40 -z-10 size-[36rem] rounded-full bg-primary/40 blur-3xl" aria-hidden="true" />
+      <div class="container-site grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.6fr)] lg:gap-12">
+        <!-- tabs: the WordPress labels -->
+        <div class="lg:sticky lg:top-28 lg:self-start">
+          <p class="flex items-center gap-3 font-display text-xs font-extrabold tracking-[0.18em] text-accent uppercase">
+            <span class="h-0.5 w-8 rounded-full bg-accent" aria-hidden="true" /> Repair menu
+          </p>
+          <div class="mt-6 space-y-3" role="tablist" aria-label="Repair menu">
+            {p.lists.map((l, i) => {
+              const Icon = listIcon(l.kind);
+              return (
+                <button
+                  type="button"
+                  role="tab"
+                  id={`rm-tab-${i}`}
+                  aria-controls={`rm-panel-${i}`}
+                  aria-selected={i === 0 ? 'true' : 'false'}
+                  data-tab={i}
+                  class="group flex w-full items-center gap-4 rounded-2xl bg-white/[0.04] p-4 text-left ring-1 ring-white/10 transition hover:bg-white/[0.08] aria-selected:bg-white aria-selected:text-ink aria-selected:ring-white sm:p-5"
+                >
+                  <span class:list={['grid size-12 shrink-0 place-items-center rounded-xl', i % 2 === 0 ? 'bg-accent text-ink' : 'bg-cta text-white']}>
+                    <Icon size={22} aria-hidden="true" />
+                  </span>
+                  <span class="flex-1 font-display text-lg leading-snug font-extrabold sm:text-xl">{l.label}</span>
+                  <span
+                    class="grid min-w-9 place-items-center rounded-full bg-white/10 px-2 py-1 font-display text-sm font-extrabold tabular-nums group-aria-selected:bg-primary group-aria-selected:text-white"
+                    data-count={i}
+                    aria-hidden="true"
+                  >
+                    {l.items.length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <a href={`tel:${site.phone.tel}`} class="btn-cta mt-8 hidden min-h-13 px-6 lg:inline-flex">
+            <Phone size={18} aria-hidden="true" /> Call {site.phone.display}
+          </a>
+        </div>
+
+        <!-- the console window -->
+        <div class="overflow-hidden rounded-3xl bg-primary-deep shadow-panel ring-1 ring-white/10">
+          <div class="flex flex-wrap items-center gap-4 border-b border-white/10 px-5 py-4">
+            <div class="flex gap-2" aria-hidden="true">
+              <span class="size-3 rounded-full bg-cta" />
+              <span class="size-3 rounded-full bg-accent" />
+              <span class="size-3 rounded-full bg-white/30" />
+            </div>
+            <label class="relative ml-auto block w-full sm:w-72">
+              <span class="sr-only">Search the repairs</span>
+              <Search size={17} class="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-accent" aria-hidden="true" />
+              <input
+                type="search"
+                data-menu-search
+                placeholder="Search the repairs"
+                class="h-11 w-full rounded-xl bg-white/10 pr-4 pl-10 text-white ring-1 ring-white/15 transition outline-none placeholder:text-white/45 focus:ring-2 focus:ring-accent"
+              />
+            </label>
+          </div>
+          <div class="p-4 sm:p-6">
+            {
+              p.lists.map((l, i) => (
+                <div id={`rm-panel-${i}`} role="tabpanel" aria-labelledby={`rm-tab-${i}`} data-panel={i} class="rm-panel">
+                  <ul class="grid grid-cols-1 gap-2.5 sm:grid-cols-2" role="list">
+                    {l.items.map((html, k) => {
+                      const Icon = itemIcon(html);
+                      return (
+                        <li
+                          class="rm-item flex items-center gap-3 rounded-2xl bg-white/[0.05] p-3 ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:bg-white/[0.09] hover:ring-accent/50"
+                          data-item
+                          data-text={plain(html).toLowerCase()}
+                          style={`--k:${k}`}
+                        >
+                          <span class:list={['grid size-10 shrink-0 place-items-center rounded-xl', ['bg-accent text-ink', 'bg-white/10 text-accent', 'bg-cta text-white'][k % 3]]}>
+                            <Icon size={18} aria-hidden="true" />
+                          </span>
+                          <span class="text-[15.5px] leading-snug text-white/90" set:html={html} />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {l.extra.length > 0 && <div class="mt-5 space-y-3 text-white/80 [&_p]:m-0" set:html={l.extra.join('')} />}
+                </div>
+              ))
+            }
+            <p class="hidden rounded-2xl bg-white/[0.05] p-5 text-white/80" data-menu-empty>
+              No matching repairs.{' '}
+              <a href={`tel:${site.phone.tel}`} class="font-semibold text-accent underline decoration-2 underline-offset-4">
+                Call {site.phone.display}
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<!-- 4. Areas we serve -->
+{
+  p.areas.length > 0 && (
+    <section class="section bg-primary-tint" aria-labelledby={p.areasId} data-areas>
+      <div class="container-site">
+        <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <h2 id={p.areasId} class={titleCls}>
+            {p.areasTitle}
+          </h2>
+          <label class="relative block w-full sm:max-w-xs">
+            <span class="sr-only">Find your suburb</span>
+            <MapPin size={18} class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-cta" aria-hidden="true" />
+            <input
+              type="search"
+              data-areas-search
+              placeholder={`Find your suburb (${allSuburbs})`}
+              class="h-12 w-full rounded-xl bg-white pr-4 pl-11 text-ink ring-1 ring-slate-300 transition outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-primary"
+            />
+          </label>
+        </div>
+        <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {p.areas.map((g, gi) => (
+            <div class="relative isolate overflow-hidden rounded-3xl bg-white p-6 ring-1 ring-slate-200 sm:p-7" data-area-group>
+              <MapPin size={150} stroke-width={1} class="pointer-events-none absolute -right-8 -bottom-10 -z-10 text-primary/[0.05]" aria-hidden="true" />
+              <div class="flex items-center gap-3">
+                <span class:list={['grid size-9 shrink-0 place-items-center rounded-xl', gi % 2 === 0 ? 'bg-primary text-white' : 'bg-accent text-ink']}>
+                  <MapPin size={17} aria-hidden="true" />
+                </span>
+                <h3 id={g.id} class="flex-1 font-display text-lg font-extrabold text-ink">
+                  {g.title}
+                </h3>
+                <span class="rounded-full bg-primary-tint px-2.5 py-0.5 font-display text-xs font-extrabold text-primary tabular-nums" aria-hidden="true">
+                  {g.links.length}
+                </span>
+              </div>
+              <ul class="mt-5 flex flex-wrap gap-2" role="list">
+                {g.links.map((l) => (
+                  <li data-suburb={l.name.toLowerCase()}>
+                    <a
+                      href={l.href}
+                      class:list={[
+                        'block rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 transition hover:bg-primary hover:text-white hover:ring-primary',
+                        l.href === '/computer-repairs-north-lakes/' ? 'bg-accent text-ink ring-accent' : 'bg-primary-tint text-ink ring-slate-200',
+                      ]}
+                      set:html={l.name}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <p class="mt-6 hidden rounded-2xl bg-white p-5 text-slate-600 ring-1 ring-slate-200" data-areas-empty>
+          No matching suburb.{' '}
+          <a href={`tel:${site.phone.tel}`} class="font-semibold text-primary underline decoration-accent decoration-2 underline-offset-4">
+            Call {site.phone.display}
+          </a>
+        </p>
+      </div>
+    </section>
+  )
+}
+
+<CtaBand />
+
+<style>
+  /* JS on: one repair list at a time */
+  :global(.js) .rm-panel:not(.is-active) {
+    display: none;
+  }
+  .rm-panel + .rm-panel {
+    margin-top: 1.5rem;
+  }
+  :global(.js) .rm-panel + .rm-panel {
+    margin-top: 0;
+  }
+  .rm-panel.is-active .rm-item {
+    animation: rm-in 0.4s ease-out both;
+    animation-delay: calc(var(--k) * 25ms);
+  }
+  @keyframes rm-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rm-panel.is-active .rm-item {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  // Repair menu: tabs + live search
+  for (const root of document.querySelectorAll<HTMLElement>('[data-menu]')) {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')];
+    const input = root.querySelector<HTMLInputElement>('[data-menu-search]');
+    const empty = root.querySelector<HTMLElement>('[data-menu-empty]');
+    let active = 0;
+    const filter = () => {
+      const q = (input?.value ?? '').trim().toLowerCase();
+      panels.forEach((panel, i) => {
+        let shown = 0;
+        panel.querySelectorAll<HTMLElement>('[data-item]').forEach((it) => {
+          const hit = !q || (it.dataset.text ?? '').includes(q);
+          it.hidden = !hit;
+          if (hit) shown++;
+        });
+        const c = root.querySelector<HTMLElement>(`[data-count="${i}"]`);
+        if (c) c.textContent = String(shown);
+        if (i === active) empty?.classList.toggle('hidden', shown > 0);
+      });
+    };
+    const show = (i: number, focus = false) => {
+      active = i;
+      tabs.forEach((t, k) => {
+        t.setAttribute('aria-selected', String(k === i));
+        t.tabIndex = k === i ? 0 : -1;
+      });
+      panels.forEach((pn, k) => pn.classList.toggle('is-active', k === i));
+      if (focus) tabs[i]?.focus();
+      filter();
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => show(i));
+      t.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') (e.preventDefault(), show((i + 1) % tabs.length, true));
+        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') (e.preventDefault(), show((i - 1 + tabs.length) % tabs.length, true));
+      });
+    });
+    input?.addEventListener('input', filter);
+    show(0);
+  }
+
+  // Areas: live suburb search
+  for (const root of document.querySelectorAll<HTMLElement>('[data-areas]')) {
+    const input = root.querySelector<HTMLInputElement>('[data-areas-search]');
+    const empty = root.querySelector<HTMLElement>('[data-areas-empty]');
+    input?.addEventListener('input', () => {
+      const q = input.value.trim().toLowerCase();
+      let shown = 0;
+      root.querySelectorAll<HTMLElement>('[data-area-group]').forEach((g) => {
+        let inGroup = 0;
+        g.querySelectorAll<HTMLElement>('[data-suburb]').forEach((li) => {
+          const hit = !q || (li.dataset.suburb ?? '').includes(q);
+          li.hidden = !hit;
+          if (hit) inGroup++;
+        });
+        g.hidden = inGroup === 0;
+        shown += inGroup;
+      });
+      empty?.classList.toggle('hidden', shown > 0);
+    });
+  }
+</script>

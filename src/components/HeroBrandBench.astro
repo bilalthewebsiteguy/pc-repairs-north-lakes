@@ -1,0 +1,365 @@
+---
+/**
+ * Laptop brand pages hero (Dell, Acer, ASUS, HP, Lenovo): a "repair bench" seen from above.
+ * A laptop lies open flat on a blueprint cutting mat (gold ruler edges). Each part from the WordPress
+ * "###" headings has a hotspot on the drawing; one at a time it pulses gold, a dashed leader runs to a
+ * white repair tag tied to the hinge, and the tag shows that part's name under the brand's REAL logo.
+ * The pills underneath are the same part names and jump to their sections.
+ * Part names come from the page (props) - nothing is typed here except the small "REPAIR TAG" label.
+ * Reduced motion: every hotspot shows, the tag shows the first part, nothing moves.
+ */
+import type { BrandPart, PartKey } from '../lib/brand';
+
+interface Props {
+  parts: BrandPart[];
+  logo?: { src: string; w: number; h: number };
+  brand: string; // for the logo's alt text, e.g. "DELL"
+}
+const { parts, logo, brand } = Astro.props;
+
+// Where each part sits on the drawing
+const SPOT: Record<PartKey, { x: number; y: number }> = {
+  lcd: { x: 190, y: 128 },
+  inverter: { x: 190, y: 206 },
+  keyboard: { x: 190, y: 279 },
+  touchpad: { x: 190, y: 352 },
+  overheat: { x: 98, y: 352 },
+  motherboard: { x: 282, y: 352 },
+  dcjack: { x: 46, y: 256 },
+};
+// Leader lines end at the tag's left edge
+const TAG_X = 378;
+const TAG_Y = 214;
+
+const cycle = parts.map((p, i) => ({ ...p, i, spot: p.key ? SPOT[p.key] : undefined }));
+const n = Math.max(cycle.length, 1);
+const STEP = 2.2; // seconds per part
+const loop = (n * STEP).toFixed(1);
+const on = (100 / n).toFixed(2);
+
+// The cycle timing depends on how many parts the page has, so the keyframes are built here
+const css = `
+.bb-on{opacity:0;animation:bb-on ${loop}s linear infinite;animation-delay:calc(var(--i) * ${STEP}s)}
+@keyframes bb-on{0%{opacity:0}1.5%{opacity:1}${(Number(on) - 1.5).toFixed(2)}%{opacity:1}${on}%{opacity:0}100%{opacity:0}}
+.bb-pill{animation:bb-pill ${loop}s linear infinite;animation-delay:calc(var(--i) * ${STEP}s)}
+@keyframes bb-pill{0%,${on}%{background:var(--brand-accent);color:var(--brand-ink);border-color:var(--brand-accent)}${(Number(on) + 0.01).toFixed(2)}%,100%{background:transparent;color:#fff;border-color:rgb(255 255 255 / .25)}}
+@media (prefers-reduced-motion:reduce){.bb-on,.bb-pill{animation:none}.bb-spot.bb-on{opacity:1}.bb-tagname.bb-on[style*="--i:0"]{opacity:1}}
+`;
+
+// Keyboard keys
+const keys = Array.from({ length: 5 }, (_, r) =>
+  Array.from({ length: 13 }, (_, c) => ({ x: 70 + c * 18.6, y: 241 + r * 15.4, w: r === 4 && c > 3 && c < 9 ? 0 : 15 })),
+)
+  .flat()
+  .filter((k) => k.w);
+// Fan blades for the overheating hotspot
+const blades = Array.from({ length: 6 }, (_, i) => i * 60);
+---
+
+<div class="bb relative mx-auto w-full max-w-[580px]">
+  <div class="overflow-hidden rounded-3xl bg-ink/45 shadow-panel ring-1 ring-white/15">
+    <svg viewBox="0 0 560 440" class="block h-auto w-full" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label={`${brand} laptop repair diagram`}>
+      <defs>
+        <pattern id="bb-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0H0V20" stroke="white" stroke-opacity="0.06"></path>
+        </pattern>
+        <pattern id="bb-grid-big" width="100" height="100" patternUnits="userSpaceOnUse">
+          <path d="M100 0H0V100" stroke="white" stroke-opacity="0.1"></path>
+        </pattern>
+        <linearGradient id="bb-screen" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="var(--brand-primary)" stop-opacity="0.7"></stop>
+          <stop offset="1" stop-color="var(--brand-ink)"></stop>
+        </linearGradient>
+      </defs>
+
+      <!-- cutting mat -->
+      <rect width="560" height="440" fill="url(#bb-grid)"></rect>
+      <rect width="560" height="440" fill="url(#bb-grid-big)"></rect>
+      <!-- ruler edges -->
+      {
+        Array.from({ length: 28 }, (_, i) => (
+          <path d={`M${20 + i * 20} 0 V${i % 5 === 0 ? 12 : 7}`} class="bb-ruler" />
+        ))
+      }
+      {
+        Array.from({ length: 22 }, (_, i) => (
+          <path d={`M0 ${20 + i * 20} H${i % 5 === 0 ? 12 : 7}`} class="bb-ruler" />
+        ))
+      }
+
+      <!-- power cable to the DC jack -->
+      <path d="M40 256 H30 C16 256 16 280 16 300 V440" class="bb-cable"></path>
+      <rect x="32" y="250" width="14" height="12" rx="3" class="bb-plug"></rect>
+
+      <!-- laptop lid (screen) -->
+      <rect x="50" y="58" width="280" height="158" rx="12" class="bb-shell"></rect>
+      <rect x="64" y="72" width="252" height="122" rx="4" fill="url(#bb-screen)"></rect>
+      <path d="M78 92 h90 M78 106 h140 M78 120 h60" class="bb-screen-line"></path>
+      <circle cx="190" cy="65" r="2.2" class="bb-cam"></circle>
+      <!-- inverter strip under the screen -->
+      <rect x="140" y="200" width="100" height="8" rx="4" class="bb-strip"></rect>
+
+      <!-- hinge -->
+      <rect x="70" y="216" width="240" height="10" rx="5" class="bb-hinge"></rect>
+
+      <!-- base -->
+      <rect x="50" y="226" width="280" height="160" rx="12" class="bb-shell"></rect>
+      <rect x="50" y="249" width="5" height="14" rx="1.5" class="bb-port"></rect>
+      {keys.map((k) => <rect x={k.x} y={k.y} width={k.w} height="11" rx="2.5" class="bb-key" />)}
+      <rect x="144.6" y="302.6" width="91" height="11" rx="2.5" class="bb-key"></rect>
+      <!-- touchpad -->
+      <rect x="148" y="326" width="84" height="50" rx="7" class="bb-pad"></rect>
+      <path d="M148 364 H232 M190 364 V376" class="bb-pad-line"></path>
+      <!-- fan + vents (left palm rest, x-ray style) -->
+      <g class="bb-xray">
+        <circle cx="98" cy="352" r="20"></circle>
+        <g class="bb-fan">
+          {blades.map((a) => <path d="M98 352 q7 -6 4 -17" transform={`rotate(${a} 98 352)`} />)}
+        </g>
+        <circle cx="98" cy="352" r="4"></circle>
+      </g>
+      <!-- board + chip (right palm rest, x-ray style) -->
+      <g class="bb-xray">
+        <rect x="266" y="336" width="32" height="32" rx="4"></rect>
+        <path d="M272 336 v-6 M282 336 v-6 M292 336 v-6 M272 368 v6 M282 368 v6 M292 368 v6 M266 346 h-6 M266 358 h-6 M298 346 h18 l6 -8 M298 358 h18 l6 8"></path>
+      </g>
+
+      <!-- string from the hinge to the repair tag -->
+      <path d={`M310 221 C350 221 360 120 ${TAG_X + 24} 104`} class="bb-string"></path>
+
+      <!-- repair tag -->
+      <g>
+        <path d={`M${TAG_X} 104 l20 -22 h128 a10 10 0 0 1 10 10 v220 a10 10 0 0 1 -10 10 h-138 a10 10 0 0 1 -10 -10 Z`} class="bb-tag"></path>
+        <circle cx={TAG_X + 24} cy="104" r="6" class="bb-tag-hole"></circle>
+        {
+          logo ? (
+            <image
+              href={logo.src}
+              x={TAG_X + 20}
+              y="122"
+              width="136"
+              height={Math.min(56, (136 * logo.h) / logo.w)}
+              preserveAspectRatio="xMinYMid meet"
+            />
+          ) : (
+            <text x={TAG_X + 20} y="160" class="bb-brand">
+              {brand}
+            </text>
+          )
+        }
+        <path d={`M${TAG_X + 20} 194 H${TAG_X + 146}`} class="bb-tag-rule"></path>
+        <text x={TAG_X + 20} y="216" class="bb-tag-label">REPAIR TAG</text>
+        {
+          cycle.map((p) => (
+            <text x={TAG_X + 20} y="250" class="bb-tagname bb-on" style={`--i:${p.i}`}>
+              {p.title.length > 10 ? (
+                <>
+                  <tspan x={TAG_X + 20}>{p.title.split(' ').slice(0, Math.ceil(p.title.split(' ').length / 2)).join(' ')}</tspan>
+                  <tspan x={TAG_X + 20} dy="22">
+                    {p.title.split(' ').slice(Math.ceil(p.title.split(' ').length / 2)).join(' ')}
+                  </tspan>
+                </>
+              ) : (
+                p.title
+              )}
+            </text>
+          ))
+        }
+        <!-- one dot per part -->
+        {
+          cycle.map((p) => (
+            <>
+              <circle cx={TAG_X + 24 + p.i * 15} cy="300" r="4.5" class="bb-dot" />
+              <circle cx={TAG_X + 24 + p.i * 15} cy="300" r="4.5" class="bb-dot-on bb-on" style={`--i:${p.i}`} />
+            </>
+          ))
+        }
+      </g>
+
+      <!-- hotspots + leaders (one shows at a time) -->
+      {
+        cycle.map(
+          (p) =>
+            p.spot && (
+              <g class="bb-spot bb-on" style={`--i:${p.i}`}>
+                <path d={`M${p.spot.x} ${p.spot.y} L${TAG_X - 30} ${p.spot.y < TAG_Y ? p.spot.y : TAG_Y + 20} L${TAG_X - 2} ${TAG_Y + 20}`} class="bb-leader" />
+                <circle cx={p.spot.x} cy={p.spot.y} r="16" class="bb-ring" />
+                <circle cx={p.spot.x} cy={p.spot.y} r="7" class="bb-core" />
+              </g>
+            ),
+        )
+      }
+    </svg>
+  </div>
+
+  {
+    parts.length > 0 && (
+      <ul class="mt-5 flex flex-wrap gap-2" role="list">
+        {parts.map((p, i) => (
+          <li>
+            <a
+              href={`#${p.id}`}
+              class="bb-pill inline-flex min-h-9 items-center rounded-full border border-white/25 px-3.5 font-display text-[13px] font-bold text-white transition hover:border-accent hover:text-accent"
+              style={`--i:${i}`}
+            >
+              {p.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</div>
+
+<style is:inline set:html={css}></style>
+
+<style>
+  .bb-ruler {
+    stroke: var(--brand-accent);
+    stroke-width: 1.5;
+    stroke-opacity: 0.8;
+  }
+  .bb-shell {
+    fill: var(--brand-primary-deep, var(--brand-ink));
+    stroke: rgb(255 255 255 / 0.55);
+    stroke-width: 2;
+  }
+  .bb-screen-line {
+    stroke: rgb(255 255 255 / 0.18);
+    stroke-width: 5;
+  }
+  .bb-cam {
+    fill: rgb(255 255 255 / 0.5);
+  }
+  .bb-strip {
+    fill: rgb(255 255 255 / 0.12);
+    stroke: var(--brand-accent);
+    stroke-opacity: 0.6;
+    stroke-width: 1.2;
+  }
+  .bb-hinge {
+    fill: rgb(255 255 255 / 0.12);
+    stroke: rgb(255 255 255 / 0.4);
+    stroke-width: 1.5;
+  }
+  .bb-port {
+    fill: var(--brand-accent);
+  }
+  .bb-key {
+    fill: rgb(255 255 255 / 0.06);
+    stroke: rgb(255 255 255 / 0.35);
+    stroke-width: 1;
+  }
+  .bb-pad {
+    fill: rgb(255 255 255 / 0.05);
+    stroke: rgb(255 255 255 / 0.45);
+    stroke-width: 1.5;
+  }
+  .bb-pad-line {
+    stroke: rgb(255 255 255 / 0.25);
+    stroke-width: 1.2;
+  }
+  .bb-xray {
+    stroke: var(--brand-accent);
+    stroke-opacity: 0.55;
+    stroke-width: 1.5;
+    stroke-dasharray: 3 3;
+  }
+  .bb-fan {
+    stroke-dasharray: none;
+    transform-origin: 98px 352px;
+    animation: bb-spin 2.4s linear infinite;
+  }
+  .bb-cable {
+    stroke: rgb(255 255 255 / 0.5);
+    stroke-width: 4;
+  }
+  .bb-plug {
+    fill: rgb(255 255 255 / 0.8);
+  }
+  .bb-string {
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+  }
+  .bb-tag {
+    fill: white;
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+  }
+  .bb-tag-hole {
+    fill: var(--brand-ink);
+    stroke: var(--brand-accent);
+    stroke-width: 2.5;
+  }
+  .bb-tag-rule {
+    stroke: var(--brand-accent);
+    stroke-width: 3;
+  }
+  .bb-tag-label {
+    font-family: var(--font-display, 'Montserrat Variable', sans-serif);
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    fill: var(--brand-primary);
+    fill-opacity: 0.7;
+  }
+  .bb-brand {
+    font-family: var(--font-display, 'Montserrat Variable', sans-serif);
+    font-size: 30px;
+    font-weight: 800;
+    fill: var(--brand-primary);
+  }
+  .bb-tagname {
+    font-family: var(--font-display, 'Montserrat Variable', sans-serif);
+    font-size: 16.5px;
+    font-weight: 800;
+    fill: var(--brand-ink);
+  }
+  .bb-dot {
+    fill: var(--brand-primary);
+    fill-opacity: 0.15;
+  }
+  .bb-dot-on {
+    fill: var(--brand-cta);
+  }
+  .bb-leader {
+    stroke: var(--brand-accent);
+    stroke-width: 2;
+    stroke-dasharray: 5 5;
+  }
+  .bb-ring {
+    stroke: var(--brand-accent);
+    stroke-width: 2.5;
+    fill: var(--brand-accent);
+    fill-opacity: 0.12;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: bb-ping 1.1s ease-out infinite;
+  }
+  .bb-core {
+    fill: var(--brand-accent);
+    stroke: var(--brand-ink);
+    stroke-width: 2.5;
+  }
+  @keyframes bb-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes bb-ping {
+    from {
+      transform: scale(0.6);
+      opacity: 1;
+    }
+    to {
+      transform: scale(1.5);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bb-fan,
+    .bb-ring {
+      animation: none;
+    }
+  }
+</style>
